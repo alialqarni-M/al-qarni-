@@ -1,0 +1,1100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 40% 97%;
+    --foreground: 158 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 158 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 158 30% 12%;
+
+    --primary: 158 65% 22%;
+    --primary-foreground: 45 60% 96%;
+    --primary-glow: 158 55% 35%;
+
+    --secondary: 42 75% 52%;
+    --secondary-foreground: 158 40% 15%;
+
+    --muted: 40 30% 94%;
+    --muted-foreground: 158 15% 35%;
+
+    --accent: 42 80% 92%;
+    --accent-foreground: 158 50% 18%;
+
+    --success: 152 60% 38%;
+    --success-foreground: 0 0% 100%;
+    --danger: 0 70% 50%;
+    --danger-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 158 20% 85%;
+    --input: 158 20% 85%;
+    --ring: 158 65% 22%;
+
+    --radius: 0.75rem;
+
+    --gradient-header: linear-gradient(135deg, hsl(158 65% 22%) 0%, hsl(158 55% 30%) 50%, hsl(158 65% 18%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(42 80% 55%) 0%, hsl(38 75% 48%) 100%);
+    --gradient-page: linear-gradient(180deg, hsl(40 40% 97%) 0%, hsl(40 30% 93%) 100%);
+    --shadow-card: 0 10px 40px -12px hsl(158 60% 15% / 0.18);
+    --shadow-soft: 0 4px 20px -6px hsl(158 40% 20% / 0.12);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+/* Final range-print safety overrides: keep period reports white and detailed regardless of selected theme */
+@media print {
+  body.print-range-days-mode,
+  body.print-range-days-mode #root,
+  body.print-range-days-mode main {
+    background: #fff !important;
+    background-color: #fff !important;
+    background-image: none !important;
+    color: #000 !important;
+  }
+
+  body.print-range-days-mode .print-range-days {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.print-range-days-mode .print-range-days .print-card {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.print-range-days-mode .print-range-days .print-table thead tr,
+  body.print-range-days-mode .print-range-days .print-table thead th {
+    background: #0d4d3a !important;
+    background-color: #0d4d3a !important;
+    background-image: none !important;
+    color: #fff !important;
+    border-color: #0a3d2e !important;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Cairo', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background-image: var(--gradient-page);
+    min-height: 100vh;
+  }
+
+  .font-display {
+    font-family: 'Amiri', serif;
+  }
+}
+
+@layer components {
+  /* Elegant glass toolbar buttons — uniform sizing, refined glassmorphism */
+  .glass-btn {
+    @apply inline-flex items-center justify-center gap-2 h-10 min-w-[140px] px-4 rounded-xl text-sm font-semibold;
+    @apply border border-white/40 text-foreground;
+    @apply transition-all duration-300 ease-out;
+    background: linear-gradient(135deg, hsl(0 0% 100% / 0.65), hsl(0 0% 100% / 0.35));
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.6) inset,
+      0 6px 18px -8px hsl(158 40% 20% / 0.18),
+      0 2px 6px -2px hsl(158 40% 20% / 0.08);
+  }
+  .glass-btn:hover {
+    transform: translateY(-1px);
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.7) inset,
+      0 10px 24px -8px hsl(158 50% 20% / 0.28),
+      0 4px 10px -2px hsl(158 40% 20% / 0.14);
+  }
+  .glass-btn:active { transform: translateY(0); }
+
+  .glass-btn-primary {
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary) / 0.4);
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.92), hsl(var(--primary-glow) / 0.85));
+  }
+  .glass-btn-primary:hover {
+    border-color: hsl(var(--primary) / 0.7);
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+  }
+
+  .glass-btn-gold {
+    color: hsl(var(--secondary-foreground));
+    border-color: hsl(var(--secondary) / 0.45);
+    background: linear-gradient(135deg, hsl(var(--secondary) / 0.85), hsl(38 75% 48% / 0.8));
+  }
+  .glass-btn-gold:hover { border-color: hsl(var(--secondary) / 0.8); }
+
+  .glass-btn-accent {
+    color: hsl(var(--primary));
+    border-color: hsl(var(--primary) / 0.3);
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(0 0% 100% / 0.55));
+  }
+
+  .glass-btn-danger {
+    color: hsl(var(--danger));
+    border-color: hsl(var(--danger) / 0.3);
+    background: linear-gradient(135deg, hsl(var(--danger) / 0.1), hsl(0 0% 100% / 0.55));
+  }
+  .glass-btn-danger:hover { border-color: hsl(var(--danger) / 0.6); }
+}
+
+/* ============ Print-only / Screen-only helpers ============ */
+.print-status-label { display: none; }
+.screen-only { display: inline-flex; }
+.print-only-header { display: none; }
+.print-range-days { display: none; }
+
+/* ============ Print styles - supports both portrait & landscape ============ */
+/* Use named pages so @page can switch via body class */
+@page portrait-page {
+  size: A4 portrait;
+  margin: 10mm 8mm;
+}
+@page landscape-page {
+  size: A4 landscape;
+  margin: 8mm 10mm;
+}
+
+@media print {
+  body { page: portrait-page; }
+  body.print-landscape { page: landscape-page; }
+}
+
+@media print {
+
+  html, body {
+    background: white !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-family: 'Cairo', sans-serif !important;
+  }
+
+  .no-print, .screen-only { display: none !important; }
+
+  /* Range report print mode — hide app, show only the range dialog content */
+  body.print-range-mode > #root { display: none !important; }
+  body.print-range-mode { background: #fff !important; color: #000 !important; }
+  body.print-range-mode [data-radix-dialog-overlay] { display: none !important; }
+  body.print-range-mode [data-radix-popper-content-wrapper],
+  body.print-range-mode [role="dialog"] {
+    position: static !important;
+    transform: none !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+    display: block !important;
+    background: #fff !important;
+    color: #000 !important;
+    padding: 0 !important;
+  }
+  /* Force every nested element inside the printed dialog to be readable */
+  body.print-range-mode [role="dialog"] *,
+  body.print-range-mode [role="dialog"] *::before,
+  body.print-range-mode [role="dialog"] *::after {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
+  body.print-range-mode [role="dialog"] table { background: #fff !important; }
+  body.print-range-mode [role="dialog"] thead tr,
+  body.print-range-mode [role="dialog"] thead th {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body.print-range-mode [role="dialog"] th,
+  body.print-range-mode [role="dialog"] td {
+    border: 1px solid #000 !important;
+  }
+  body.print-range-mode [role="dialog"] button[aria-label="Close"],
+  body.print-range-mode .no-print { display: none !important; }
+
+  /* Hide the per-day print container by default (also during normal printing) */
+  .print-range-days { display: none !important; }
+
+  /* Range full-detail print: hide everything else, render only per-day cards */
+  body.print-range-days-mode { background: #fff !important; color: #000 !important; }
+  body.print-range-days-mode > *:not(#root),
+  body.print-range-days-mode .dialog-overlay,
+  body.print-range-days-mode [data-radix-dialog-overlay],
+  body.print-range-days-mode [data-radix-focus-guard] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    background: transparent !important;
+  }
+  body.print-range-days-mode #root,
+  body.print-range-days-mode main {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  body.print-range-days-mode * {
+    animation: none !important;
+    transition: none !important;
+  }
+  body.print-range-days-mode [role="dialog"],
+  body.print-range-days-mode [data-radix-dialog-overlay],
+  body.print-range-days-mode [data-radix-popper-content-wrapper] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+  /* Range print uses the dedicated print container to avoid changing the live site before printing */
+  body.print-range-days-mode main > div > *:not(.print-range-days),
+  body.print-range-days-mode .range-site-days > .no-print { display: none !important; }
+  body.print-range-days-mode .performance-charts-section,
+  body.print-range-days-mode .performance-charts { display: none !important; }
+  body.print-range-days-mode header.no-print,
+  body.print-range-days-mode .no-print { display: none !important; }
+
+  body.print-range-days-mode .print-range-days,
+  body.print-range-days-mode .print-range-days * {
+    visibility: visible !important;
+  }
+  body.print-range-days-mode .print-range-days {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  /* Force readable colors inside printed range cards */
+  body.print-range-days-mode .print-range-days *,
+  body.print-range-days-mode .print-range-days *::before,
+  body.print-range-days-mode .print-range-days *::after {
+    color: #000 !important;
+    text-shadow: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+  body.print-range-days-mode .print-range-days [class*="bg-card"],
+  body.print-range-days-mode .print-range-days article,
+  body.print-range-days-mode .print-range-days table,
+  body.print-range-days-mode .print-range-days tbody,
+  body.print-range-days-mode .print-range-days thead,
+  body.print-range-days-mode .print-range-days tr,
+  body.print-range-days-mode .print-range-days td,
+  body.print-range-days-mode .print-range-days th,
+  body.print-range-days-mode .print-range-days footer,
+  body.print-range-days-mode .print-range-days div,
+  body.print-range-days-mode .print-range-days section {
+    background: #fff !important;
+    background-color: #fff !important;
+    background-image: none !important;
+  }
+  body.print-range-days-mode .print-range-days thead th {
+    background: #f0f0f0 !important;
+    background-color: #f0f0f0 !important;
+  }
+  body.print-range-days-mode .print-range-days th,
+  body.print-range-days-mode .print-range-days td {
+    border: 1px solid #000 !important;
+  }
+  body.print-range-days-mode .print-range-days .print-status-label[data-status="done"] { color: #0a7d2c !important; }
+  body.print-range-days-mode .print-range-days .print-status-label[data-status="not_done"] { color: #b91c1c !important; }
+  body.print-range-days-mode main > div {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  main { padding: 0 !important; }
+  .max-w-\[1400px\] { max-width: 100% !important; }
+  .max-w-\[1400px\] > * + * { margin-top: 0 !important; }
+
+  .print-card {
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+    page-break-inside: avoid;
+    width: 100%;
+    display: block;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    background: white !important;
+  }
+
+  /* Force only the second report card to start on a fresh page (single-day print only) */
+  body:not(.print-charts-only):not(.print-range-days-mode):not(.print-range-mode) .report-section + .report-section .print-card {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  body:not(.print-charts-only):not(.print-range-days-mode):not(.print-range-mode) .report-section:first-of-type .print-card {
+    page-break-before: auto !important;
+    break-before: auto !important;
+  }
+
+  /* Range-days print: force every card to a separate page */
+  body.print-range-days-mode .print-range-days .report-section {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    page-break-before: auto !important;
+    break-before: auto !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+  }
+
+  body.print-range-days-mode .print-range-days .report-section + .report-section {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  /* Each card on its own page: force page break before every card,
+     then cancel it on the very first card to avoid a leading blank page */
+  body.print-range-days-mode .print-range-days .print-card {
+    display: block !important;
+    visibility: visible !important;
+    page-break-before: auto !important;
+    break-before: auto !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+  }
+
+  body.print-range-days-mode .print-range-days .report-section:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  body.print-range-days-mode .print-range-days .report-section:last-child .print-card {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .print-card:last-child,
+  section:last-of-type .print-card,
+  section:last-of-type,
+  main > section:last-child .print-card,
+  main > section:last-child,
+  main > *:last-child,
+  main > *:last-child .print-card {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure no trailing empty page from main/body */
+  html, body, main, #root {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  main > *:last-child { margin-bottom: 0 !important; padding-bottom: 0 !important; }
+
+  .print-card .overflow-x-auto { overflow: visible !important; }
+
+  /* Distinct print header */
+  .print-only-header {
+    display: block !important;
+    margin-bottom: 8px;
+    border-bottom: 2px solid #0d4d3a;
+    padding-bottom: 6px;
+  }
+
+  .print-bar {
+    height: 4px;
+    background: linear-gradient(90deg, #0d4d3a 0%, #4a9b6e 50%, #0d4d3a 100%);
+    margin-bottom: 8px;
+    border-radius: 2px;
+  }
+
+  .print-head-grid {
+    display: grid !important;
+    grid-template-columns: 140px 1fr 70px;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .print-logo {
+    width: 70px !important;
+    height: 70px !important;
+    object-fit: contain;
+  }
+
+  .print-head-center { text-align: center; }
+  .print-kingdom { font-size: 10px; color: #555; margin: 0; font-weight: 600; }
+  .print-ministry { font-size: 12px; color: #0d4d3a; margin: 1px 0; font-weight: 800; letter-spacing: 0.3px; }
+  .print-school { font-size: 11px; font-weight: 700; color: #0d4d3a; margin: 1px 0; }
+  .print-title {
+    font-family: 'Amiri', serif !important;
+    font-size: 18px !important;
+    font-weight: 700;
+    color: #0d4d3a;
+    margin: 2px 0 1px 0;
+  }
+  .print-subtitle { font-size: 11px; color: #333; margin: 0; font-weight: 600; }
+
+  .print-head-meta {
+    font-size: 9px;
+    text-align: left;
+    border-left: 2px solid #0d4d3a;
+    padding-left: 6px;
+  }
+  .print-head-meta p { margin: 1px 0; }
+  .print-meta-stats {
+    display: flex !important;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+  .print-meta-stats > span {
+    flex: 1 1 0;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .print-meta-done { color: #0a6b3b; font-weight: 700; }
+  .print-meta-not { color: #b3261e; font-weight: 700; }
+
+  /* Elegant top stats banner */
+  .print-stats-banner {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 5px;
+    margin: 0 0 8px 0;
+    padding: 5px;
+    background: linear-gradient(135deg, #f7faf8 0%, #eef6f1 100%);
+    border: 1px solid #c7e0d2;
+    border-radius: 6px;
+  }
+  .print-stat-box {
+    flex: 1;
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #ffffff;
+    border-radius: 5px;
+    border-right: 3px solid #0d4d3a;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .print-stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 900;
+    color: #fff;
+    background: #0d4d3a;
+    flex-shrink: 0;
+  }
+  .print-stat-text {
+    display: flex !important;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+  .print-stat-label { font-size: 8px; color: #555; font-weight: 600; }
+  .print-stat-value { font-size: 12px; color: #0d4d3a; font-weight: 800; }
+
+  .print-stat-done    { border-right-color: #0a6b3b; }
+  .print-stat-done    .print-stat-icon { background: #0a6b3b; }
+  .print-stat-done    .print-stat-value { color: #0a6b3b; }
+
+  .print-stat-not     { border-right-color: #b3261e; }
+  .print-stat-not     .print-stat-icon { background: #b3261e; }
+  .print-stat-not     .print-stat-value { color: #b3261e; }
+
+  .print-stat-pending { border-right-color: #888; }
+  .print-stat-pending .print-stat-icon { background: #888; }
+  .print-stat-pending .print-stat-value { color: #555; }
+
+  .print-stat-total   { border-right-color: #0d4d3a; }
+  .print-stat-rate    { border-right-color: #1c7a52; }
+  .print-stat-rate    .print-stat-icon { background: #1c7a52; }
+  .print-stat-rate    .print-stat-value { color: #1c7a52; }
+
+  .print-footer {
+    padding: 4px 12px 0 !important;
+    background: transparent !important;
+    border-top: 0 !important;
+    margin-top: 2px !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: flex-start !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-footer > div:first-child {
+    display: none !important;
+  }
+
+  /* Signature block — directly under principal name, same white page background */
+  .print-signature-block {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: center !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .print-signature-block p {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.3 !important;
+  }
+  /* Signature image — directly below principal name */
+  .print-signature {
+    height: 32px !important;
+    max-width: 130px !important;
+    object-fit: contain !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: white !important;
+    display: block !important;
+    mix-blend-mode: normal !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  body.print-landscape .print-signature {
+    height: 48px !important;
+    max-width: 160px !important;
+    margin: 2px auto 0 auto !important;
+  }
+
+  /* Print table — clean, professional, fits full A4 portrait width */
+  .print-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    margin-top: 4px;
+  }
+
+  .print-table thead tr {
+    background: #0d4d3a !important;
+    color: white !important;
+  }
+
+  .print-table thead th {
+    background: #0d4d3a !important;
+    color: white !important;
+    font-size: 6px !important;
+    padding: 2px 1px !important;
+    border: 1px solid #0a3d2e !important;
+    font-weight: 700;
+    line-height: 1.05 !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal !important;
+  }
+
+  /* Column sizing: narrow #, wider name, very narrow specialty, evaluations share rest */
+  .print-table thead th:nth-child(1),
+  .print-table tbody td:nth-child(1) { width: 18px !important; }
+  .print-table thead th:nth-child(2),
+  .print-table tbody td:nth-child(2) { width: 22% !important; }
+  .print-table thead th:nth-child(3),
+  .print-table tbody td:nth-child(3) { width: 38px !important; }
+
+  .print-table tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-table tbody tr:nth-child(even) { background: #f7f7f5 !important; }
+
+  .print-table tbody td {
+    font-size: 7.5px !important;
+    padding: 2px 1px !important;
+    border: 1px solid #c8c8c8 !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal !important;
+    line-height: 1.2 !important;
+    min-width: 0 !important;
+    color: #000 !important;
+  }
+
+  /* Names: keep readable & full */
+  .print-table tbody td:nth-child(2) {
+    font-size: 8.5px !important;
+    font-weight: 700 !important;
+    text-align: right !important;
+    white-space: normal !important;
+    word-break: keep-all !important;
+    padding: 2px 4px !important;
+  }
+  .print-table tbody td:nth-child(3),
+  .print-table tbody td:nth-child(3) * {
+    font-size: 6px !important;
+    text-align: center !important;
+    color: #0d4d3a !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    letter-spacing: -0.2px !important;
+    word-break: break-word !important;
+  }
+  .print-table tbody td:nth-child(3) {
+    background: #eaf5ee !important;
+    padding: 1px !important;
+  }
+
+  .print-table input {
+    font-size: 8px !important;
+    padding: 0 !important;
+    color: #000 !important;
+    background: transparent !important;
+    width: 100% !important;
+  }
+
+  /* Replace interactive buttons with clean symbols */
+  .print-cell { display: block !important; text-align: center; }
+  .print-status-label {
+    display: inline-block !important;
+    font-size: 11px !important;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .print-status-label[data-status="done"]     { color: #0a6b3b; }
+  .print-status-label[data-status="not_done"] { color: #b3261e; }
+  .print-status-label[data-status="none"]     { color: #bbb; }
+}
+
+/* ============ Landscape overrides — larger fonts, more breathing room ============ */
+@media print {
+  body.print-landscape .print-table thead th {
+    font-size: 8.5px !important;
+    padding: 4px 2px !important;
+  }
+  body.print-landscape .print-table thead th:nth-child(1),
+  body.print-landscape .print-table tbody td:nth-child(1) { width: 28px !important; }
+  body.print-landscape .print-table thead th:nth-child(2),
+  body.print-landscape .print-table tbody td:nth-child(2) { width: 18% !important; }
+  body.print-landscape .print-table thead th:nth-child(3),
+  body.print-landscape .print-table tbody td:nth-child(3) { width: 70px !important; }
+
+  body.print-landscape .print-table tbody td {
+    font-size: 9.5px !important;
+    padding: 3px 2px !important;
+    line-height: 1.25 !important;
+  }
+  body.print-landscape .print-table tbody td:nth-child(2) {
+    font-size: 10.5px !important;
+    padding: 3px 5px !important;
+  }
+  body.print-landscape .print-table tbody td:nth-child(3),
+  body.print-landscape .print-table tbody td:nth-child(3) * {
+    font-size: 8px !important;
+    letter-spacing: 0 !important;
+  }
+  body.print-landscape .print-status-label {
+    font-size: 13px !important;
+  }
+
+  body.print-landscape .print-title { font-size: 22px !important; }
+  body.print-landscape .print-subtitle { font-size: 13px !important; }
+  body.print-landscape .print-kingdom { font-size: 11px !important; }
+  body.print-landscape .print-ministry { font-size: 14px !important; }
+  body.print-landscape .print-school { font-size: 12px !important; }
+  body.print-landscape .print-head-meta { font-size: 11px !important; }
+  body.print-landscape .print-head-grid { grid-template-columns: 180px 1fr 80px !important; }
+  body.print-landscape .print-logo { width: 80px !important; height: 80px !important; }
+
+  body.print-landscape .print-stat-label { font-size: 10px !important; }
+  body.print-landscape .print-stat-value { font-size: 14px !important; }
+  body.print-landscape .print-stat-icon { width: 24px !important; height: 24px !important; font-size: 13px !important; }
+}
+
+/* ============ Charts section print behavior ============ */
+@media print {
+  /* Default: hide charts section during normal report print */
+  body:not(.print-charts-only) .performance-charts-section { display: none !important; }
+
+  /* Charts-only print mode: hide everything, then reveal the charts section + ancestors */
+  body.print-charts-only { page: landscape-page; }
+  body.print-charts-only * { visibility: hidden !important; }
+  body.print-charts-only .performance-charts-section,
+  body.print-charts-only .performance-charts-section * {
+    visibility: visible !important;
+  }
+  /* Extra safety: fully hide siblings outside the charts section */
+  body.print-charts-only > *:not(#root) { display: none !important; }
+  body.print-charts-only #root > *:not(:has(.performance-charts-section)) { display: none !important; }
+  body.print-charts-only .performance-charts-section .no-print {
+    display: none !important;
+  }
+  body.print-charts-only .performance-charts-section {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 8mm !important;
+    margin: 0 !important;
+    background: white !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-inside: avoid !important;
+    break-after: avoid !important;
+    overflow: hidden !important;
+  }
+  /* Prevent trailing blank page from descendants */
+  body.print-charts-only .performance-charts-section *,
+  body.print-charts-only .print-charts-footer,
+  body.print-charts-only .print-charts-footer * {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  body.print-charts-only html,
+  body.print-charts-only body,
+  body.print-charts-only #root {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body.print-charts-only .recharts-wrapper,
+  body.print-charts-only .recharts-surface {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure chart text (axis ticks, legend labels, pie labels) is readable in print */
+  body.print-charts-only .recharts-wrapper text,
+  body.print-charts-only .recharts-surface text,
+  body.print-charts-only .recharts-cartesian-axis-tick text,
+  body.print-charts-only .recharts-polar-angle-axis-tick text,
+  body.print-charts-only .recharts-label,
+  body.print-charts-only .recharts-pie-label-text {
+    fill: #0d4d3a !important;
+    color: #0d4d3a !important;
+    font-weight: 700 !important;
+  }
+  body.print-charts-only .recharts-legend-item-text,
+  body.print-charts-only .recharts-default-legend .recharts-legend-item-text {
+    color: #0d4d3a !important;
+    fill: #0d4d3a !important;
+    font-weight: 700 !important;
+  }
+  body.print-charts-only .recharts-cartesian-grid line {
+    stroke: #cbd5e1 !important;
+  }
+
+  /* Hide hover tooltips and active indicators during print (the dark labels like "حسن السهيمي") */
+  .recharts-tooltip-wrapper,
+  .recharts-tooltip-cursor,
+  .recharts-active-dot,
+  .recharts-tooltip,
+  body.print-charts-only .recharts-tooltip-wrapper,
+  body.print-charts-only .recharts-tooltip-cursor,
+  body.print-charts-only .recharts-active-dot,
+  body.print-charts-only .recharts-tooltip {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* ===== Show official header & signature when printing charts ===== */
+  body.print-charts-only .print-charts-header,
+  body.print-charts-only .print-charts-footer {
+    display: block !important;
+  }
+
+  /* Hide on-screen header/tabs and KPI row in chart print to fit one page */
+  body.print-charts-only .performance-charts-section > div.flex.items-center.justify-between,
+  body.print-charts-only .performance-charts-section > .grid.grid-cols-2 {
+    display: none !important;
+  }
+
+  /* Layout the section as a flex column to push footer to the bottom */
+  body.print-charts-only .performance-charts-section {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    padding: 6mm 8mm !important;
+    overflow: hidden !important;
+  }
+
+  /* Official header */
+  .print-charts-header {
+    margin-bottom: 4mm;
+    border-bottom: 2px solid #0d4d3a;
+    padding-bottom: 3mm;
+  }
+  .print-charts-bar {
+    height: 4px;
+    background: linear-gradient(90deg, #0d4d3a, #c9a84c, #0d4d3a);
+    border-radius: 2px;
+    margin-bottom: 3mm;
+  }
+  .print-charts-head-grid {
+    display: grid !important;
+    grid-template-columns: 100px 1fr 100px;
+    align-items: center;
+    gap: 8px;
+    direction: rtl;
+  }
+  .print-charts-head-side { font-size: 11px; color: #0d4d3a; }
+  .print-charts-head-center { text-align: center; color: #0d4d3a; }
+  .print-charts-kingdom { font-size: 11px; }
+  .print-charts-ministry { font-size: 15px; font-weight: 800; }
+  .print-charts-edu { font-size: 10px; }
+  .print-charts-school { font-size: 12px; font-weight: 700; margin-top: 2px; }
+  .print-charts-title { font-size: 16px; font-weight: 800; margin-top: 3px; color: #0d4d3a; }
+  .print-charts-logo {
+    width: 80px; height: 80px; object-fit: contain;
+    background: #fff; border-radius: 6px; padding: 2px;
+    justify-self: start;
+  }
+
+  /* Charts grid: keep on one page */
+  body.print-charts-only .performance-charts-section > .grid.grid-cols-1 {
+    flex: 1 1 auto !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  body.print-charts-only .performance-charts-section > .grid.grid-cols-1 > div {
+    padding: 3mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    overflow: hidden !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  /* Force every chart container (lg:col-span-2 included) to single column width */
+  body.print-charts-only .performance-charts-section > .grid.grid-cols-1 > div.lg\:col-span-2 {
+    grid-column: span 1 / span 1 !important;
+  }
+  body.print-charts-only .performance-charts-section > .grid.grid-cols-1 > div > div[class*="h-["] {
+    height: 38mm !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    flex: 1 1 auto !important;
+  }
+  body.print-charts-only .performance-charts-section > .grid.grid-cols-1 > div h3 { font-size: 11px !important; margin-bottom: 1mm !important; }
+  body.print-charts-only .performance-charts-section > .grid.grid-cols-1 > div p { font-size: 8px !important; margin-bottom: 1mm !important; }
+
+  /* Shrink legend text and items so they fit inside their cell */
+  body.print-charts-only .recharts-legend-wrapper {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    font-size: 8px !important;
+  }
+  body.print-charts-only .recharts-legend-item {
+    margin-right: 4px !important;
+    margin-left: 4px !important;
+  }
+  body.print-charts-only .recharts-legend-item-text,
+  body.print-charts-only .recharts-default-legend .recharts-legend-item-text {
+    font-size: 8px !important;
+  }
+  body.print-charts-only .recharts-wrapper {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Signature footer */
+  .print-charts-footer {
+    margin-top: 4mm;
+    padding-top: 3mm;
+    border-top: 1.5px solid #0d4d3a;
+    display: flex !important;
+    justify-content: flex-end;
+    direction: rtl;
+  }
+  .print-charts-sign { text-align: center; min-width: 200px; }
+  .print-charts-sign-label { font-size: 11px; color: #555; }
+  .print-charts-sign-name { font-size: 13px; font-weight: 800; color: #0d4d3a; margin-top: 2px; }
+  .print-charts-sign-img { height: 40px; max-width: 160px; object-fit: contain; margin: 2px auto 0; display: block; }
+  .print-charts-sign-line { width: 160px; border-bottom: 1.5px dotted #888; margin: 6px auto 0; }
+}
+
+
+/* ============ Print Themes — selectable visual styles for printed reports ============ */
+@media print {
+  /* ===== Theme: Royal Gold (ملكي ذهبي) ===== */
+  body.print-theme-royal .print-only-header { border-bottom-color: #8b6914 !important; }
+  body.print-theme-royal .print-bar {
+    background: linear-gradient(90deg, #8b6914 0%, #d4af37 50%, #8b6914 100%) !important;
+    height: 5px !important;
+  }
+  body.print-theme-royal .print-ministry,
+  body.print-theme-royal .print-school,
+  body.print-theme-royal .print-title { color: #6b5410 !important; }
+  body.print-theme-royal .print-head-meta { border-left-color: #8b6914 !important; }
+  body.print-theme-royal .print-meta-done { color: #5a7c2e !important; }
+  body.print-theme-royal .print-stats-banner {
+    background: linear-gradient(135deg, #fdfaf0 0%, #f7eed4 100%) !important;
+    border-color: #d4af37 !important;
+  }
+  body.print-theme-royal .print-stat-box { border-right-color: #8b6914 !important; }
+  body.print-theme-royal .print-stat-icon { background: #8b6914 !important; }
+  body.print-theme-royal .print-stat-value { color: #6b5410 !important; }
+  body.print-theme-royal .print-stat-done { border-right-color: #5a7c2e !important; }
+  body.print-theme-royal .print-stat-done .print-stat-icon { background: #5a7c2e !important; }
+  body.print-theme-royal .print-stat-done .print-stat-value { color: #5a7c2e !important; }
+  body.print-theme-royal .print-table thead tr,
+  body.print-theme-royal .print-table thead th {
+    background: linear-gradient(180deg, #8b6914 0%, #6b5410 100%) !important;
+    color: #fff !important;
+    border-color: #5a4810 !important;
+  }
+  body.print-theme-royal .print-table tbody td:nth-child(3) { background: #faf3dc !important; }
+  body.print-theme-royal .print-table tbody td:nth-child(3),
+  body.print-theme-royal .print-table tbody td:nth-child(3) * { color: #6b5410 !important; }
+  body.print-theme-royal .print-status-label[data-status="done"] { color: #5a7c2e !important; }
+
+  /* ===== Theme: Modern Blue (عصري أزرق) ===== */
+  body.print-theme-modern .print-only-header { border-bottom-color: #1e40af !important; }
+  body.print-theme-modern .print-bar {
+    background: linear-gradient(90deg, #1e40af 0%, #3b82f6 50%, #1e40af 100%) !important;
+  }
+  body.print-theme-modern .print-ministry,
+  body.print-theme-modern .print-school,
+  body.print-theme-modern .print-title { color: #1e3a8a !important; }
+  body.print-theme-modern .print-head-meta { border-left-color: #1e40af !important; }
+  body.print-theme-modern .print-stats-banner {
+    background: linear-gradient(135deg, #f0f6ff 0%, #dbeafe 100%) !important;
+    border-color: #93c5fd !important;
+  }
+  body.print-theme-modern .print-stat-box { border-right-color: #1e40af !important; }
+  body.print-theme-modern .print-stat-icon { background: #1e40af !important; }
+  body.print-theme-modern .print-stat-value { color: #1e3a8a !important; }
+  body.print-theme-modern .print-table thead tr,
+  body.print-theme-modern .print-table thead th {
+    background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%) !important;
+    color: #fff !important;
+    border-color: #1e3a8a !important;
+  }
+  body.print-theme-modern .print-table tbody td:nth-child(3) { background: #eff6ff !important; }
+  body.print-theme-modern .print-table tbody td:nth-child(3),
+  body.print-theme-modern .print-table tbody td:nth-child(3) * { color: #1e3a8a !important; }
+
+  /* ===== Theme: Elegant Mono (أنيق رمادي) ===== */
+  body.print-theme-mono .print-only-header { border-bottom: 1px solid #1a1a1a !important; padding-bottom: 8px !important; }
+  body.print-theme-mono .print-bar { display: none !important; }
+  body.print-theme-mono .print-ministry,
+  body.print-theme-mono .print-school,
+  body.print-theme-mono .print-title { color: #1a1a1a !important; }
+  body.print-theme-mono .print-title { letter-spacing: 0.5px !important; font-weight: 800 !important; }
+  body.print-theme-mono .print-head-meta { border-left-color: #1a1a1a !important; color: #333 !important; }
+  body.print-theme-mono .print-stats-banner {
+    background: #fafafa !important;
+    border: 1px solid #d4d4d4 !important;
+  }
+  body.print-theme-mono .print-stat-box {
+    background: #fff !important;
+    border-right-color: #1a1a1a !important;
+    box-shadow: none !important;
+    border: 1px solid #e5e5e5 !important;
+    border-right: 3px solid #1a1a1a !important;
+  }
+  body.print-theme-mono .print-stat-icon { background: #1a1a1a !important; }
+  body.print-theme-mono .print-stat-value { color: #1a1a1a !important; }
+  body.print-theme-mono .print-stat-done { border-right-color: #2d5a2d !important; }
+  body.print-theme-mono .print-stat-done .print-stat-icon { background: #2d5a2d !important; }
+  body.print-theme-mono .print-stat-done .print-stat-value { color: #2d5a2d !important; }
+  body.print-theme-mono .print-stat-not { border-right-color: #7a1f1f !important; }
+  body.print-theme-mono .print-stat-not .print-stat-icon { background: #7a1f1f !important; }
+  body.print-theme-mono .print-stat-not .print-stat-value { color: #7a1f1f !important; }
+  body.print-theme-mono .print-table thead tr,
+  body.print-theme-mono .print-table thead th {
+    background: #1a1a1a !important;
+    color: #fff !important;
+    border-color: #000 !important;
+  }
+  body.print-theme-mono .print-table tbody td:nth-child(3) { background: #f5f5f5 !important; }
+  body.print-theme-mono .print-table tbody td:nth-child(3),
+  body.print-theme-mono .print-table tbody td:nth-child(3) * { color: #1a1a1a !important; }
+  body.print-theme-mono .print-status-label[data-status="done"] { color: #2d5a2d !important; }
+  body.print-theme-mono .print-status-label[data-status="not_done"] { color: #7a1f1f !important; }
+
+  /* ===== Theme: Sunset Warm (شروق دافئ) ===== */
+  body.print-theme-warm .print-only-header { border-bottom-color: #9a3412 !important; }
+  body.print-theme-warm .print-bar {
+    background: linear-gradient(90deg, #9a3412 0%, #f97316 50%, #9a3412 100%) !important;
+  }
+  body.print-theme-warm .print-ministry,
+  body.print-theme-warm .print-school,
+  body.print-theme-warm .print-title { color: #7c2d12 !important; }
+  body.print-theme-warm .print-head-meta { border-left-color: #9a3412 !important; }
+  body.print-theme-warm .print-stats-banner {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%) !important;
+    border-color: #fdba74 !important;
+  }
+  body.print-theme-warm .print-stat-box { border-right-color: #9a3412 !important; }
+  body.print-theme-warm .print-stat-icon { background: #9a3412 !important; }
+  body.print-theme-warm .print-stat-value { color: #7c2d12 !important; }
+  body.print-theme-warm .print-table thead tr,
+  body.print-theme-warm .print-table thead th {
+    background: linear-gradient(180deg, #c2410c 0%, #7c2d12 100%) !important;
+    color: #fff !important;
+    border-color: #7c2d12 !important;
+  }
+  body.print-theme-warm .print-table tbody td:nth-child(3) { background: #fff7ed !important; }
+  body.print-theme-warm .print-table tbody td:nth-child(3),
+  body.print-theme-warm .print-table tbody td:nth-child(3) * { color: #7c2d12 !important; }
+}
