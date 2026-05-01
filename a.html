@@ -1,0 +1,1806 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { TeacherCard, type CardConfig, type Status, type Teacher } from "@/components/TeacherCard";
+import { PerformanceCharts } from "@/components/PerformanceCharts";
+import { InstallAppButton } from "@/components/InstallAppButton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Printer, Download, Upload, RotateCcw, Settings, Image as ImageIcon, X, Archive, Save, Search, FileStack, Trash2, Calendar as CalendarIcon, Palette, GraduationCap, FolderArchive, FolderUp, DatabaseBackup, CalendarRange } from "lucide-react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const buildEmptyValues = (cols: { key: string }[]): Record<string, Status> =>
+  Object.fromEntries(cols.map((c) => [c.key, "none" as Status]));
+
+const card1Columns = [
+  { key: "tawzee3", label: "توزيع المنهج" },
+  { key: "sijil", label: "سجل المتابعة" },
+  { key: "mansa", label: "أعمال المنصة" },
+  { key: "injaz", label: "ملف الإنجاز" },
+  { key: "3ilajiya", label: "الخطط العلاجية" },
+  { key: "awraq", label: "أوراق العمل" },
+  { key: "daqa2iq", label: "مشروع الدقائق" },
+  { key: "fahm", label: "ملف الفهم القرائي (لغة عربية)" },
+  { key: "hudoor", label: "الانضباط في الحضور" },
+  { key: "insiraf", label: "الانضباط في الانصراف" },
+  { key: "tabour", label: "حضور الطابور الصباحي" },
+];
+
+const card1Teachers = [
+  { id: 1, name: "حسن عبدالله السهيمي", specialty: "رياضيات" },
+  { id: 2, name: "محمد الحسين علي القرني", specialty: "رياضيات" },
+  { id: 3, name: "محمد سالم الشمراني", specialty: "علوم" },
+  { id: 4, name: "محمد بلغيث القرني", specialty: "رياضة" },
+  { id: 5, name: "يزيد محمد القرني", specialty: "لغة عربية" },
+  { id: 6, name: "موسى عبدالله زيدي", specialty: "لغة عربية" },
+  { id: 7, name: "حامد علي الشمراني", specialty: "إسلامية" },
+  { id: 9, name: "راجح صالح السهيمي", specialty: "علوم" },
+  { id: 10, name: "إبراهيم بلغيث الحارثي", specialty: "صعوبات تعلم" },
+  { id: 11, name: "محمد حسن عبدالهادي", specialty: "فنية" },
+  { id: 12, name: "حسن عبدالرحمن القرني", specialty: "حاسوب" },
+  { id: 13, name: "حسن سرور الرمي", specialty: "اجتماعيات" },
+  { id: 14, name: "أحمد عبدالله سعد", specialty: "تربية إسلامية" },
+  { id: 15, name: "سعيد عبدالله القرني", specialty: "تربية إسلامية" },
+  { id: 16, name: "عبدالله سعيد القرني", specialty: "اللغة الإنجليزية" },
+];
+
+const card2Columns = [
+  { key: "tawzee3", label: "توزيع المنهج" },
+  { key: "sijil", label: "سجل المتابعة" },
+  { key: "mansa", label: "أعمال المنصة" },
+  { key: "injaz", label: "ملف الإنجاز" },
+  { key: "awraq", label: "أوراق العمل" },
+  { key: "wajibat", label: "الواجبات الطلابية" },
+  { key: "fardiya", label: "الخطط الفردية" },
+  { key: "hudoor", label: "الانضباط في الحضور" },
+  { key: "insiraf", label: "الانضباط في الانصراف" },
+  { key: "tabour", label: "حضور الطابور الصباحي" },
+];
+
+const card2Teachers = [
+  { id: 1, name: "أحمد محمد عبدالله", specialty: "فكرية" },
+  { id: 2, name: "محمد أحمد هندي", specialty: "فكرية" },
+  { id: 3, name: "فايز سعد العلياني", specialty: "فكرية" },
+  { id: 4, name: "محمد أحمد الكثيري", specialty: "فكرية" },
+  { id: 5, name: "معض حمزة علي", specialty: "فكرية" },
+  { id: 6, name: "أحمد عبدالكريم القرني", specialty: "فكرية" },
+  { id: 7, name: "عبدالرحمن علي القرني", specialty: "فكرية" },
+  { id: 8, name: "إبراهيم بلغيث القرني", specialty: "فكرية" },
+];
+
+const COMMON_TITLE = "سجل المتابعة العامة للمعلمين";
+
+const initialCard1: CardConfig = {
+  id: "card-general",
+  title: COMMON_TITLE,
+  subtitle: "معلمو التعليم العام",
+  accent: "emerald",
+  columns: card1Columns,
+  teachers: card1Teachers.map((t) => ({ ...t, values: buildEmptyValues(card1Columns), reason: "" })),
+};
+
+const initialCard2: CardConfig = {
+  id: "card-fikriya",
+  title: COMMON_TITLE,
+  subtitle: "معلمو التربية الفكرية والتوحد",
+  accent: "emerald",
+  columns: card2Columns,
+  teachers: card2Teachers.map((t) => ({ ...t, values: buildEmptyValues(card2Columns), reason: "" })),
+};
+
+const STORAGE_KEY = "thuriban-records-v3";
+const ARCHIVE_KEY = "thuriban-archive-v1";
+const DESIGN_BACKUP_KEY = "thuriban-design-backups-v1";
+const FULL_SNAPSHOT_KEY = "thuriban-full-snapshots-v1";
+
+interface FullSnapshot {
+  id: string;
+  name: string;
+  savedAt: string;
+  payload: any; // full app state
+}
+
+interface ArchivedReport {
+  id: string;
+  date: string; // gregorian YYYY-MM-DD
+  hijri: string;
+  savedAt: string;
+  schoolName: string;
+  principalName: string;
+  card1: CardConfig;
+  card2: CardConfig;
+}
+
+interface DesignBackup {
+  id: string;
+  name: string;
+  savedAt: string;
+  logo: string | null;
+  signature: string | null;
+  schoolName: string;
+  principalName: string;
+  card1Subtitle: string;
+  card2Subtitle: string;
+  card1Columns: { key: string; label: string }[];
+  card2Columns: { key: string; label: string }[];
+}
+
+const normalizeArchive = (list: ArchivedReport[], limit = 500) => {
+  const byDate = new Map<string, ArchivedReport>();
+  list.filter((r) => r?.date && r.card1 && r.card2).forEach((report) => {
+    const normalizedReport = {
+      ...report,
+      id: `auto-${report.date}`,
+      hijri: report.hijri || new Date(report.date).toLocaleDateString("ar-SA-u-ca-islamic", { day: "numeric", month: "numeric", year: "numeric" }),
+      savedAt: report.savedAt || new Date().toISOString(),
+      schoolName: report.schoolName || "",
+      principalName: report.principalName || "",
+    };
+    const current = byDate.get(report.date);
+    if (!current || new Date(normalizedReport.savedAt).getTime() >= new Date(current.savedAt || 0).getTime()) {
+      byDate.set(report.date, normalizedReport);
+    }
+  });
+  return Array.from(byDate.values()).sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
+};
+
+// ================= TEMPLATES =================
+type Template = {
+  id: string;
+  label: string;
+  description: string;
+  apply: (cur: CardConfig) => CardConfig;
+};
+
+const templates: Template[] = [
+  {
+    id: "all-done",
+    label: "تعيين الكل كمنفذ",
+    description: "ضبط جميع الخانات على (نُفذ) دفعة واحدة",
+    apply: (cur) => ({
+      ...cur,
+      teachers: cur.teachers.map((t) => ({
+        ...t,
+        values: Object.fromEntries(cur.columns.map((c) => [c.key, "done" as Status])),
+      })),
+    }),
+  },
+  {
+    id: "clear",
+    label: "تفريغ التقييم",
+    description: "إعادة جميع الخانات إلى (لم يُقيَّم)",
+    apply: (cur) => ({
+      ...cur,
+      teachers: cur.teachers.map((t) => ({
+        ...t,
+        values: Object.fromEntries(cur.columns.map((c) => [c.key, "none" as Status])),
+      })),
+    }),
+  },
+  {
+    id: "discipline-done",
+    label: "الانضباط فقط منفذ",
+    description: "ضبط أعمدة الحضور والانصراف والطابور كمنفذ",
+    apply: (cur) => ({
+      ...cur,
+      teachers: cur.teachers.map((t) => ({
+        ...t,
+        values: {
+          ...Object.fromEntries(cur.columns.map((c) => [c.key, t.values[c.key] ?? "none" as Status])),
+          hudoor: "done" as Status,
+          insiraf: "done" as Status,
+          tabour: "done" as Status,
+        },
+      })),
+    }),
+  },
+  {
+    id: "writing-done",
+    label: "الأعمال التحريرية منفذة",
+    description: "تعيين أعمدة المنهج والسجل والمنصة وملف الإنجاز كمنفذ",
+    apply: (cur) => ({
+      ...cur,
+      teachers: cur.teachers.map((t) => ({
+        ...t,
+        values: {
+          ...Object.fromEntries(cur.columns.map((c) => [c.key, t.values[c.key] ?? "none" as Status])),
+          tawzee3: "done" as Status,
+          sijil: "done" as Status,
+          mansa: "done" as Status,
+          injaz: "done" as Status,
+        },
+      })),
+    }),
+  },
+];
+
+const Index = () => {
+  const [card1, setCard1] = useState<CardConfig>(initialCard1);
+  const [card2, setCard2] = useState<CardConfig>(initialCard2);
+  const [logo, setLogo] = useState<string | null>(null);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [schoolName, setSchoolName] = useState("مدرسة ثريبان الابتدائية");
+  const [principalName, setPrincipalName] = useState("محمد عبدالرحمن المشايخ");
+  const [editMode, setEditMode] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Date — editable
+  const [reportDate, setReportDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+
+  // Archive
+  const [archive, setArchive] = useState<ArchivedReport[]>([]);
+  const [showArchive, setShowArchive] = useState(false);
+  const [archiveQuery, setArchiveQuery] = useState("");
+
+  // Design backups
+  const [designBackups, setDesignBackups] = useState<DesignBackup[]>([]);
+  const [showDesignBackups, setShowDesignBackups] = useState(false);
+  const [newDesignBackupName, setNewDesignBackupName] = useState("");
+
+  // Full snapshots (نسخة شاملة لكل الموقع)
+  const [fullSnapshots, setFullSnapshots] = useState<FullSnapshot[]>([]);
+  const [showFullSnapshots, setShowFullSnapshots] = useState(false);
+  const [newSnapshotName, setNewSnapshotName] = useState("");
+  const fullSnapshotImportRef = useRef<HTMLInputElement>(null);
+
+  // Templates
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [templateTarget, setTemplateTarget] = useState<"card1" | "card2">("card1");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>(templates[0].id);
+
+  // Range tracking (رصد لفترة زمنية)
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const [rangeFrom, setRangeFrom] = useState<string>(todayISO);
+  const [rangeTo, setRangeTo] = useState<string>(todayISO);
+  const [rangeApplyTarget, setRangeApplyTarget] = useState<"both" | "card1" | "card2">("both");
+  const [rangeApplyTemplate, setRangeApplyTemplate] = useState<string>(templates[0].id);
+  const [rangeIncludeWeekends, setRangeIncludeWeekends] = useState<boolean>(false);
+  const [rangeDisplayActive, setRangeDisplayActive] = useState<boolean>(false);
+
+  // Specialty editor
+  const [specialtyOpen, setSpecialtyOpen] = useState(false);
+  const [specialtyTarget, setSpecialtyTarget] = useState<"card1" | "card2">("card1");
+  const COMMON_SPECIALTIES = [
+    "رياضيات", "علوم", "لغة عربية", "تربية إسلامية", "إسلامية",
+    "اللغة الإنجليزية", "اجتماعيات", "حاسوب", "فنية", "رياضة",
+    "صعوبات تعلم", "فكرية", "توحد", "تربية بدنية",
+  ];
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
+  const archiveImportRef = useRef<HTMLInputElement>(null);
+  const isInitialLoad = useRef(true);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.card1) setCard1({ ...data.card1, title: COMMON_TITLE });
+        if (data.card2) setCard2({ ...data.card2, title: COMMON_TITLE });
+        if (data.logo) setLogo(data.logo);
+        if (data.signature) setSignature(data.signature);
+        if (data.schoolName) setSchoolName(data.schoolName);
+        if (data.principalName) setPrincipalName(data.principalName);
+        if (data.reportDate) setReportDate(data.reportDate);
+      }
+      const arc = localStorage.getItem(ARCHIVE_KEY);
+      if (arc) {
+        const normalized = normalizeArchive(JSON.parse(arc));
+        setArchive(normalized);
+        localStorage.setItem(ARCHIVE_KEY, JSON.stringify(normalized));
+      }
+      const db = localStorage.getItem(DESIGN_BACKUP_KEY);
+      if (db) setDesignBackups(JSON.parse(db));
+      const fs = localStorage.getItem(FULL_SNAPSHOT_KEY);
+      if (fs) setFullSnapshots(JSON.parse(fs));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ card1, card2, logo, signature, schoolName, principalName, reportDate, savedAt: new Date().toISOString() })
+      );
+    } catch {}
+  }, [card1, card2, logo, signature, schoolName, principalName, reportDate]);
+
+  const hijriDate = useMemo(() => {
+    try {
+      return new Date(reportDate).toLocaleDateString("ar-SA-u-ca-islamic", {
+        day: "numeric",
+        month: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return reportDate;
+    }
+  }, [reportDate]);
+
+  const gregorianFormatted = useMemo(() => {
+    try {
+      return new Date(reportDate).toLocaleDateString("ar", { day: "numeric", month: "numeric", year: "numeric" });
+    } catch {
+      return reportDate;
+    }
+  }, [reportDate]);
+
+  const fullReportDate = `${hijriDate} — ${gregorianFormatted}`;
+
+  const archivedReports = useMemo(() => normalizeArchive(archive), [archive]);
+
+  // Check if a card has any actual evaluation data (any non-empty value or reason)
+  const cardHasData = (c: CardConfig) => {
+    return c.teachers?.some((t) => {
+      const hasValues = t.values && Object.values(t.values).some((v) => v === "done" || v === "not_done");
+      const hasReason = !!(t.reason && String(t.reason).trim());
+      return hasValues || hasReason;
+    });
+  };
+
+  // Auto-save current evaluations under the current date in the archive (latest entry per date wins)
+  // Only saves if there is actual evaluation data — prevents creating empty duplicates on date change
+  const autoSaveCurrentDate = (dateKey: string) => {
+    if (!cardHasData(card1) && !cardHasData(card2)) return;
+    const report: ArchivedReport = {
+      id: `auto-${dateKey}`,
+      date: dateKey,
+      hijri: (() => {
+        try {
+          return new Date(dateKey).toLocaleDateString("ar-SA-u-ca-islamic", { day: "numeric", month: "numeric", year: "numeric" });
+        } catch { return dateKey; }
+      })(),
+      savedAt: new Date().toISOString(),
+      schoolName,
+      principalName,
+      card1,
+      card2,
+    };
+    setArchive((prev) => {
+      // Remove any previous entry for the same date (by id or by date) to avoid duplicates
+      const next = normalizeArchive([report, ...prev], 500);
+      try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
+  // Auto-save whenever evaluations change (debounced via effect dependency)
+  useEffect(() => {
+    if (isInitialLoad.current) { isInitialLoad.current = false; return; }
+    const t = setTimeout(() => autoSaveCurrentDate(reportDate), 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card1, card2]);
+
+  const handleDateChange = (newDate: string) => {
+    if (!newDate || newDate === reportDate) return;
+    // Save current snapshot under the old date first (only if it has data)
+    autoSaveCurrentDate(reportDate);
+    // Try to load existing snapshot for the new date
+    const existing = archivedReports.find((r) => r.date === newDate);
+    if (existing) {
+      setCard1({ ...existing.card1, title: COMMON_TITLE });
+      setCard2({ ...existing.card2, title: COMMON_TITLE });
+      toast.success(`تم تحميل تقييمات ${newDate}`);
+    } else {
+      // No snapshot yet — start a fresh evaluation for this date (do NOT auto-save empty)
+      setCard1((c) => ({ ...c, teachers: c.teachers.map((t) => ({ ...t, values: buildEmptyValues(c.columns), reason: "" })) }));
+      setCard2((c) => ({ ...c, teachers: c.teachers.map((t) => ({ ...t, values: buildEmptyValues(c.columns), reason: "" })) }));
+      toast.info(`تاريخ جديد: ${newDate} — ابدأ بإدخال التقييمات`);
+    }
+    setReportDate(newDate);
+  };
+
+  // ===== Bulk archive backup =====
+  const exportAllArchive = () => {
+    if (archivedReports.length === 0) { toast.error("الأرشيف فارغ"); return; }
+    const payload = {
+      type: "thuriban-archive-bulk",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      count: archivedReports.length,
+      archive: archivedReports,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `أرشيف-كامل-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`تم تصدير ${archivedReports.length} تقرير`);
+  };
+
+  const importAllArchive = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      let incoming: ArchivedReport[] = [];
+      if (Array.isArray(data)) {
+        incoming = data;
+      } else if (Array.isArray(data?.archive)) {
+        incoming = data.archive;
+      } else if (data && data.card1 && data.card2) {
+        // Single-report export shape — convert to one archive entry
+        const date = data.reportDate || new Date().toISOString().slice(0, 10);
+        incoming = [{
+          id: `auto-${date}`,
+          date,
+          savedAt: data.exportedAt || new Date().toISOString(),
+          card1: data.card1,
+          card2: data.card2,
+          schoolName: data.schoolName,
+          principalName: data.principalName,
+          logo: data.logo,
+        } as unknown as ArchivedReport];
+      }
+      // Validate entries have required fields
+      incoming = normalizeArchive(incoming);
+      if (incoming.length === 0) throw new Error("invalid");
+      const mode = confirm(`سيتم استرجاع ${incoming.length} تقرير.\n\nاضغط (موافق) للدمج مع الأرشيف الحالي،\nأو (إلغاء) لاستبدال الأرشيف بالكامل.`);
+      let next: ArchivedReport[];
+      if (mode) {
+        next = normalizeArchive([...archive, ...incoming]);
+      } else {
+        next = normalizeArchive(incoming);
+      }
+      setArchive(next);
+      try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(next)); } catch {}
+      toast.success(`تم استرجاع ${incoming.length} تقرير`);
+    } catch {
+      toast.error("ملف الأرشيف غير صالح");
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  // ===== Full snapshot (نسخة شاملة لكل الموقع) =====
+  const buildFullPayload = () => ({
+    type: "thuriban-full-snapshot",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    state: { card1, card2, logo, signature, schoolName, principalName, reportDate },
+    archive: normalizeArchive(archive),
+    designBackups,
+  });
+
+  const restoreFullPayload = (data: any) => {
+    const s = data?.state;
+    if (!s || !s.card1 || !s.card2) throw new Error("invalid");
+    setCard1({ ...s.card1, title: COMMON_TITLE });
+    setCard2({ ...s.card2, title: COMMON_TITLE });
+    setLogo(s.logo ?? null);
+    setSignature(s.signature ?? null);
+    setSchoolName(s.schoolName ?? "");
+    setPrincipalName(s.principalName ?? "");
+    if (s.reportDate) setReportDate(s.reportDate);
+    if (Array.isArray(data.archive)) {
+      const norm = normalizeArchive(data.archive);
+      setArchive(norm);
+      try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(norm)); } catch {}
+    }
+    if (Array.isArray(data.designBackups)) {
+      setDesignBackups(data.designBackups);
+      try { localStorage.setItem(DESIGN_BACKUP_KEY, JSON.stringify(data.designBackups)); } catch {}
+    }
+  };
+
+  const saveFullSnapshot = () => {
+    const name = (newSnapshotName || "").trim() || `نسخة ${new Date().toLocaleString("ar")}`;
+    const snap: FullSnapshot = {
+      id: `snap-${Date.now()}`,
+      name,
+      savedAt: new Date().toISOString(),
+      payload: buildFullPayload(),
+    };
+    const next = [snap, ...fullSnapshots].slice(0, 30);
+    setFullSnapshots(next);
+    try { localStorage.setItem(FULL_SNAPSHOT_KEY, JSON.stringify(next)); }
+    catch { toast.error("تعذر الحفظ — مساحة المتصفح ممتلئة"); return; }
+    setNewSnapshotName("");
+    toast.success(`تم حفظ النسخة الشاملة: ${name}`);
+  };
+
+  const restoreFullSnapshot = (snap: FullSnapshot) => {
+    if (!confirm(`سيتم استرجاع "${snap.name}" واستبدال كل ما في الموقع. متابعة؟`)) return;
+    try { restoreFullPayload(snap.payload); toast.success("تم الاسترجاع بنجاح"); }
+    catch { toast.error("النسخة غير صالحة"); }
+  };
+
+  const deleteFullSnapshot = (id: string) => {
+    if (!confirm("حذف هذه النسخة الشاملة؟")) return;
+    const next = fullSnapshots.filter((s) => s.id !== id);
+    setFullSnapshots(next);
+    try { localStorage.setItem(FULL_SNAPSHOT_KEY, JSON.stringify(next)); } catch {}
+  };
+
+  const exportFullSnapshot = (snap?: FullSnapshot) => {
+    const payload = snap ? snap.payload : buildFullPayload();
+    const name = snap ? snap.name : `نسخة-شاملة-${new Date().toISOString().slice(0,10)}`;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${name}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("تم تنزيل النسخة الشاملة");
+  };
+
+  const importFullSnapshotFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (data?.type !== "thuriban-full-snapshot") {
+        if (!confirm("الملف لا يبدو نسخة شاملة. متابعة المحاولة؟")) { e.target.value = ""; return; }
+      }
+      if (!confirm("سيتم استبدال كامل بيانات الموقع (التقييمات، الأرشيف، التصميم). متابعة؟")) {
+        e.target.value = ""; return;
+      }
+      restoreFullPayload(data);
+      const snap: FullSnapshot = {
+        id: `snap-${Date.now()}`,
+        name: file.name.replace(/\.json$/i, "") || "نسخة مستوردة",
+        savedAt: new Date().toISOString(),
+        payload: data,
+      };
+      const next = [snap, ...fullSnapshots].slice(0, 30);
+      setFullSnapshots(next);
+      try { localStorage.setItem(FULL_SNAPSHOT_KEY, JSON.stringify(next)); } catch {}
+      toast.success("تم استرجاع النسخة الشاملة");
+    } catch { toast.error("ملف غير صالح"); }
+    finally { e.target.value = ""; }
+  };
+
+  const handleExport = () => {
+    const payload = { card1, card2, logo, schoolName, principalName, reportDate, exportedAt: new Date().toISOString(), version: 3 };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `نسخة-احتياطية-${reportDate}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("تم تنزيل النسخة الاحتياطية");
+  };
+
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (data.card1) setCard1({ ...data.card1, title: COMMON_TITLE });
+      if (data.card2) setCard2({ ...data.card2, title: COMMON_TITLE });
+      if (data.logo) setLogo(data.logo);
+      if (data.schoolName) setSchoolName(data.schoolName);
+      if (data.principalName) setPrincipalName(data.principalName);
+      if (data.reportDate) setReportDate(data.reportDate);
+      toast.success("تم استرجاع النسخة الاحتياطية");
+    } catch {
+      toast.error("ملف غير صالح");
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("حجم الصورة كبير (الحد 2 ميجا)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setLogo(reader.result as string);
+      toast.success("تم رفع الشعار");
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("حجم الصورة كبير (الحد 2 ميجا)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSignature(reader.result as string);
+      toast.success("تم رفع التوقيع وحفظه");
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleReset = () => {
+    if (confirm("هل أنت متأكد من تفريغ جميع التقييمات؟ لا يمكن التراجع.")) {
+      setCard1(initialCard1);
+      setCard2(initialCard2);
+      toast.success("تم تفريغ السجل");
+    }
+  };
+
+  const [printOrientation, setPrintOrientation] = useState<"portrait" | "landscape">("portrait");
+
+  // Print themes
+  const PRINT_THEMES = [
+    { id: "classic", label: "كلاسيكي أخضر", desc: "اللون الرسمي الأخضر التقليدي", swatch: ["#0d4d3a", "#4a9b6e"] },
+    { id: "royal", label: "ملكي ذهبي", desc: "ذهبي فاخر بلمسة وزارية", swatch: ["#8b6914", "#d4af37"] },
+    { id: "modern", label: "عصري أزرق", desc: "أزرق أنيق ومريح للعين", swatch: ["#1e40af", "#3b82f6"] },
+    { id: "mono", label: "أنيق رمادي", desc: "أبيض وأسود راقٍ بسيط", swatch: ["#1a1a1a", "#737373"] },
+    { id: "warm", label: "شروق دافئ", desc: "برتقالي دافئ مميز", swatch: ["#9a3412", "#f97316"] },
+  ] as const;
+  type PrintThemeId = typeof PRINT_THEMES[number]["id"];
+  const PRINT_THEME_KEY = "thuriban-print-theme";
+  const [printTheme, setPrintTheme] = useState<PrintThemeId>(() => {
+    try { return (localStorage.getItem(PRINT_THEME_KEY) as PrintThemeId) || "classic"; } catch { return "classic"; }
+  });
+  const [showThemeDialog, setShowThemeDialog] = useState(false);
+
+  useEffect(() => {
+    try { localStorage.setItem(PRINT_THEME_KEY, printTheme); } catch {}
+  }, [printTheme]);
+
+  const applyPrintThemeClass = (theme: PrintThemeId) => {
+    PRINT_THEMES.forEach((t) => document.body.classList.remove(`print-theme-${t.id}`));
+    if (theme !== "classic") document.body.classList.add(`print-theme-${theme}`);
+  };
+
+  const handlePrint = (orientation?: "portrait" | "landscape") => {
+    if (rangeDisplayActive && rangeReportsChronological.length > 0) {
+      printRangeReport(orientation);
+      return;
+    }
+
+    const o = orientation ?? printOrientation;
+    if (o === "landscape") document.body.classList.add("print-landscape");
+    else document.body.classList.remove("print-landscape");
+    setPrintOrientation(o);
+    applyPrintThemeClass(printTheme);
+
+    // Temporarily clear the document title so the browser does not
+    // print the page title (e.g. "سجل متابعة المعلمين") in the page header.
+    const originalTitle = document.title;
+    document.title = " ";
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove("print-landscape");
+        PRINT_THEMES.forEach((t) => document.body.classList.remove(`print-theme-${t.id}`));
+        document.title = originalTitle;
+      }, 500);
+    }, 50);
+  };
+
+  // Archive actions
+  const saveToArchive = () => {
+    const report: ArchivedReport = {
+      id: `auto-${reportDate}`,
+      date: reportDate,
+      hijri: hijriDate,
+      savedAt: new Date().toISOString(),
+      schoolName,
+      principalName,
+      card1,
+      card2,
+    };
+    const next = normalizeArchive([report, ...archive], 100);
+    setArchive(next);
+    try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(next)); } catch {}
+    toast.success("تم حفظ التقرير في الأرشيف");
+  };
+
+  const loadArchived = (r: ArchivedReport) => {
+    setCard1({ ...r.card1, title: COMMON_TITLE });
+    setCard2({ ...r.card2, title: COMMON_TITLE });
+    setReportDate(r.date);
+    setSchoolName(r.schoolName);
+    setPrincipalName(r.principalName);
+    const next = normalizeArchive([r, ...archive]);
+    setArchive(next);
+    try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(next)); } catch {}
+    setShowArchive(false);
+    toast.success(`تم تحميل تقرير ${r.date}`);
+  };
+
+  const deleteArchived = (id: string) => {
+    if (!confirm("حذف هذا التقرير من الأرشيف؟")) return;
+    const next = archive.filter((r) => r.id !== id);
+    setArchive(next);
+    try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(next)); } catch {}
+  };
+
+  const deleteAllArchived = () => {
+    if (archivedReports.length === 0) { toast.error("الأرشيف فارغ"); return; }
+    if (!confirm(`سيتم حذف جميع التقارير السابقة (${archivedReports.length}). هل أنت متأكد؟`)) return;
+    if (!confirm("تأكيد نهائي: لا يمكن التراجع عن هذا الإجراء.")) return;
+    setArchive([]);
+    try { localStorage.removeItem(ARCHIVE_KEY); } catch {}
+    toast.success("تم حذف جميع التقارير السابقة");
+  };
+
+  const filteredArchive = archivedReports.filter((r) => {
+    if (!archiveQuery.trim()) return true;
+    const q = archiveQuery.toLowerCase();
+    return (
+      r.date.includes(q) ||
+      r.hijri.toLowerCase().includes(q) ||
+      r.schoolName.toLowerCase().includes(q)
+    );
+  });
+
+  const applyTemplate = () => {
+    const tpl = templates.find((t) => t.id === selectedTemplate);
+    if (!tpl) return;
+    if (templateTarget === "card1") setCard1(tpl.apply(card1));
+    else setCard2(tpl.apply(card2));
+    setTemplateOpen(false);
+    toast.success(`تم تطبيق القالب: ${tpl.label}`);
+  };
+
+  // ===== Range tracking helpers =====
+  const enumerateDates = (from: string, to: string, includeWeekends: boolean): string[] => {
+    if (!from || !to) return [];
+    const start = new Date(from);
+    const end = new Date(to);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return [];
+    const out: string[] = [];
+    const cur = new Date(start);
+    while (cur <= end) {
+      const day = cur.getDay(); // 0=Sun..6=Sat — السعودية: عطلة الجمعة(5) والسبت(6)
+      const isWeekend = day === 5 || day === 6;
+      if (includeWeekends || !isWeekend) {
+        out.push(cur.toISOString().slice(0, 10));
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    return out;
+  };
+
+  const rangeDates = useMemo(
+    () => enumerateDates(rangeFrom, rangeTo, rangeIncludeWeekends),
+    [rangeFrom, rangeTo, rangeIncludeWeekends]
+  );
+
+  // Reports in archive/current screen that fall within the selected range
+  const rangeReports = useMemo(
+    () => {
+      const reports = archivedReports.filter((r) => r.date >= rangeFrom && r.date <= rangeTo);
+      if (reportDate >= rangeFrom && reportDate <= rangeTo && (cardHasData(card1) || cardHasData(card2))) {
+        const currentReport: ArchivedReport = {
+          id: `current-${reportDate}`,
+          date: reportDate,
+          hijri: hijriDate,
+          savedAt: new Date().toISOString(),
+          schoolName,
+          principalName,
+          card1,
+          card2,
+        };
+        return normalizeArchive([currentReport, ...reports], 1000);
+      }
+      return reports;
+    },
+    [archivedReports, rangeFrom, rangeTo, reportDate, hijriDate, schoolName, principalName, card1, card2]
+  );
+
+  const rangeReportsChronological = useMemo(
+    () => [...rangeReports].sort((a, b) => a.date.localeCompare(b.date)),
+    [rangeReports]
+  );
+
+  const showRangeOnSite = () => {
+    if (rangeReports.length === 0) {
+      toast.error("لا توجد تقييمات محفوظة في هذه الفترة");
+      return;
+    }
+    setRangeDisplayActive(true);
+    setRangeOpen(false);
+    toast.success("تم عرض تقييم الفترة في الموقع وربطه بالطباعة الرئيسية");
+  };
+
+  // Aggregated stats per teacher across the range (per card)
+  const computeRangeAggregate = (which: "card1" | "card2") => {
+    const reports = rangeReports;
+    const base = which === "card1" ? card1 : card2;
+    const perTeacher = new Map<number, { name: string; specialty: string; done: number; not_done: number; pending: number; total: number }>();
+    base.teachers.forEach((t) => {
+      perTeacher.set(t.id, { name: t.name, specialty: t.specialty, done: 0, not_done: 0, pending: 0, total: 0 });
+    });
+    reports.forEach((r) => {
+      const cfg = which === "card1" ? r.card1 : r.card2;
+      cfg?.teachers?.forEach((t) => {
+        const acc = perTeacher.get(t.id) ?? { name: t.name, specialty: t.specialty, done: 0, not_done: 0, pending: 0, total: 0 };
+        cfg.columns.forEach((c) => {
+          acc.total += 1;
+          const v = t.values?.[c.key];
+          if (v === "done") acc.done += 1;
+          else if (v === "not_done") acc.not_done += 1;
+          else acc.pending += 1;
+        });
+        perTeacher.set(t.id, acc);
+      });
+    });
+    return Array.from(perTeacher.entries()).map(([id, v]) => ({ id, ...v, rate: v.total > 0 ? Math.round((v.done / v.total) * 100) : 0 }));
+  };
+
+  // Apply a quick template to every day in the range — saves a snapshot per day in the archive
+  const applyTemplateToRange = () => {
+    const tpl = templates.find((t) => t.id === rangeApplyTemplate);
+    if (!tpl) { toast.error("اختر قالباً"); return; }
+    const dates = rangeDates;
+    if (dates.length === 0) { toast.error("النطاق غير صالح أو لا يحتوي على أيام"); return; }
+
+    setArchive((prev) => {
+      const merged = [...prev];
+      dates.forEach((d) => {
+        const existing = merged.find((r) => r.date === d);
+        const baseCard1 = existing?.card1 ? { ...existing.card1, title: COMMON_TITLE } : { ...card1 };
+        const baseCard2 = existing?.card2 ? { ...existing.card2, title: COMMON_TITLE } : { ...card2 };
+        const newCard1 = (rangeApplyTarget === "card1" || rangeApplyTarget === "both") ? tpl.apply(baseCard1) : baseCard1;
+        const newCard2 = (rangeApplyTarget === "card2" || rangeApplyTarget === "both") ? tpl.apply(baseCard2) : baseCard2;
+        const report: ArchivedReport = {
+          id: `auto-${d}`,
+          date: d,
+          hijri: (() => { try { return new Date(d).toLocaleDateString("ar-SA-u-ca-islamic", { day: "numeric", month: "numeric", year: "numeric" }); } catch { return d; } })(),
+          savedAt: new Date().toISOString(),
+          schoolName,
+          principalName,
+          card1: newCard1,
+          card2: newCard2,
+        };
+        const idx = merged.findIndex((r) => r.date === d);
+        if (idx >= 0) merged[idx] = report; else merged.push(report);
+      });
+      const next = normalizeArchive(merged, 1000);
+      try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setRangeDisplayActive(true);
+    setRangeOpen(false);
+    toast.success(`تم رصد ${dates.length} يوم بقالب "${tpl.label}"`);
+  };
+
+  // Delete a single archived report by date (within the range tools)
+  const deleteRangeReportByDate = (date: string) => {
+    setArchive((prev) => {
+      const next = prev.filter((r) => r.date !== date);
+      try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+    toast.success(`تم حذف رصد يوم ${date}`);
+  };
+
+  // Delete all archived reports inside the current range (bulk)
+  const deleteAllRangeReports = () => {
+    if (rangeReports.length === 0) { toast.error("لا توجد تقييمات لحذفها"); return; }
+    setArchive((prev) => {
+      const next = prev.filter((r) => !(r.date >= rangeFrom && r.date <= rangeTo));
+      try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+    toast.success(`تم حذف ${rangeReports.length} تقييم من الفترة`);
+  };
+
+  // Print the range as full detailed site cards — one set per day
+  const printRangeReport = (orientation?: "portrait" | "landscape") => {
+    if (rangeReports.length === 0) { toast.error("لا توجد تقييمات محفوظة في هذا النطاق"); return; }
+    const o = orientation ?? printOrientation;
+    const originalTitle = document.title;
+    document.title = " ";
+    setPrintOrientation(o);
+    if (o === "landscape") document.body.classList.add("print-landscape");
+    else document.body.classList.remove("print-landscape");
+    document.body.classList.add("print-range-days-mode");
+    applyPrintThemeClass(printTheme);
+
+    // Close the dialog so its portal is fully removed from the DOM before printing
+    setRangeOpen(false);
+
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      document.body.classList.remove("print-range-days-mode");
+      document.body.classList.remove("print-landscape");
+      PRINT_THEMES.forEach((t) => document.body.classList.remove(`print-theme-${t.id}`));
+      document.title = originalTitle;
+    };
+
+    window.addEventListener("afterprint", cleanup, { once: true });
+    // Wait two animation frames + a small delay so React unmounts the dialog/portal
+    // (otherwise Radix overlay paints a black background over the printout)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          window.print();
+          setTimeout(cleanup, 300);
+        }, 80);
+      });
+    });
+  };
+
+  const saveDesignBackup = () => {
+    const name = (newDesignBackupName || `تصميم ${new Date().toLocaleString("ar")}`).trim();
+    const backup: DesignBackup = {
+      id: `design-${Date.now()}`,
+      name,
+      savedAt: new Date().toISOString(),
+      logo,
+      signature,
+      schoolName,
+      principalName,
+      card1Subtitle: card1.subtitle,
+      card2Subtitle: card2.subtitle,
+      card1Columns: card1.columns,
+      card2Columns: card2.columns,
+    };
+    const next = [backup, ...designBackups].slice(0, 50);
+    setDesignBackups(next);
+    try { localStorage.setItem(DESIGN_BACKUP_KEY, JSON.stringify(next)); } catch {}
+    setNewDesignBackupName("");
+    toast.success("تم حفظ نسخة من التصميم");
+  };
+
+  const restoreDesignBackup = (b: DesignBackup) => {
+    if (!confirm(`استرجاع التصميم "${b.name}"؟ سيتم استبدال الشعار والتوقيع وأسماء الأعمدة الحالية.`)) return;
+    setLogo(b.logo);
+    setSignature(b.signature);
+    setSchoolName(b.schoolName);
+    setPrincipalName(b.principalName);
+    setCard1((c) => ({ ...c, subtitle: b.card1Subtitle, columns: b.card1Columns }));
+    setCard2((c) => ({ ...c, subtitle: b.card2Subtitle, columns: b.card2Columns }));
+    toast.success(`تم استرجاع التصميم: ${b.name}`);
+  };
+
+  const deleteDesignBackup = (id: string) => {
+    if (!confirm("حذف هذه النسخة من التصميم؟")) return;
+    const next = designBackups.filter((b) => b.id !== id);
+    setDesignBackups(next);
+    try { localStorage.setItem(DESIGN_BACKUP_KEY, JSON.stringify(next)); } catch {}
+  };
+
+  const exportDesignBackup = (b: DesignBackup) => {
+    const blob = new Blob([JSON.stringify(b, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `تصميم-${b.name}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <main className="min-h-screen py-8 px-4 md:px-8">
+      <div className="max-w-[1400px] mx-auto space-y-8">
+        {/* Page header */}
+        <header className="no-print bg-card rounded-2xl shadow-soft border border-border p-6 animate-fade-in">
+          <div className="flex flex-col gap-5">
+            <div className="text-center sm:text-right">
+              <h1 className="font-display text-3xl md:text-4xl font-bold text-primary leading-tight">
+                {COMMON_TITLE}
+              </h1>
+              <p className="text-muted-foreground mt-1">{schoolName} — {fullReportDate}</p>
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex flex-col gap-3">
+              {/* Date picker — centered, full row */}
+              <div className="flex justify-center">
+                <div className="glass-btn glass-btn-accent !min-w-0 !px-3 gap-2 w-full sm:w-auto">
+                  <CalendarIcon className="w-4 h-4 text-primary shrink-0" />
+                  <Input
+                    type="date"
+                    value={reportDate}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                    className="h-7 w-[150px] border-0 bg-transparent p-0 text-sm font-semibold text-primary focus-visible:ring-0"
+                  />
+                </div>
+              </div>
+
+              {/* Print actions */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <button onClick={() => handlePrint("portrait")} className="glass-btn glass-btn-primary !w-full !min-w-0">
+                  <Printer className="w-4 h-4" /> طباعة طولية
+                </button>
+                <button onClick={() => handlePrint("landscape")} className="glass-btn glass-btn-primary !w-full !min-w-0">
+                  <Printer className="w-4 h-4 rotate-90" /> طباعة عرضية
+                </button>
+                <button
+                  onClick={() => setShowThemeDialog(true)}
+                  className="glass-btn glass-btn-accent !w-full !min-w-0 col-span-2 sm:col-span-1"
+                  title="اختيار شكل الطباعة"
+                >
+                  <Palette className="w-4 h-4" /> ثيم الطباعة
+                </button>
+              </div>
+
+              {/* Main actions — uniform grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                <button onClick={saveToArchive} className="glass-btn glass-btn-accent !w-full !min-w-0">
+                  <Save className="w-4 h-4" /> حفظ في الأرشيف
+                </button>
+                <button onClick={() => setShowArchive(true)} className="glass-btn glass-btn-accent !w-full !min-w-0">
+                  <Archive className="w-4 h-4" /> التقارير ({archivedReports.length})
+                </button>
+                <button onClick={() => setTemplateOpen(true)} className="glass-btn glass-btn-accent !w-full !min-w-0">
+                  <FileStack className="w-4 h-4" /> تعبئة سريعة
+                </button>
+                <button onClick={() => setRangeOpen(true)} className="glass-btn glass-btn-accent !w-full !min-w-0" title="رصد لفترة (يوم/أسبوع/شهر/نطاق حر)">
+                  <CalendarRange className="w-4 h-4" /> رصد فترة زمنية
+                </button>
+                <button onClick={() => setSpecialtyOpen(true)} className="glass-btn glass-btn-accent !w-full !min-w-0">
+                  <GraduationCap className="w-4 h-4" /> تعديل التخصصات
+                </button>
+                <button
+                  onClick={() => setEditMode((v) => !v)}
+                  className="glass-btn glass-btn-accent !w-full !min-w-0"
+                >
+                  <Settings className="w-4 h-4" /> {editMode ? "إنهاء التعديل" : "تعديل الاسم"}
+                </button>
+                <button onClick={() => setShowSettings(true)} className="glass-btn glass-btn-accent !w-full !min-w-0">
+                  <ImageIcon className="w-4 h-4" /> لوحة التحكم
+                </button>
+                <button onClick={handleExport} className="glass-btn glass-btn-accent !w-full !min-w-0">
+                  <Download className="w-4 h-4" /> نسخة احتياطية
+                </button>
+                <button onClick={handleImportClick} className="glass-btn glass-btn-accent !w-full !min-w-0">
+                  <Upload className="w-4 h-4" /> استرجاع نسخة
+                </button>
+                <button onClick={() => setShowDesignBackups(true)} className="glass-btn glass-btn-accent !w-full !min-w-0">
+                  <Palette className="w-4 h-4" /> نسخ التصميم ({designBackups.length})
+                </button>
+                <button
+                  onClick={() => setShowFullSnapshots(true)}
+                  className="glass-btn glass-btn-accent !w-full !min-w-0"
+                  title="نسخة شاملة لكل الموقع وبياناته"
+                >
+                  <DatabaseBackup className="w-4 h-4" /> نسخة شاملة ({fullSnapshots.length})
+                </button>
+                <InstallAppButton />
+                <button onClick={handleReset} className="glass-btn glass-btn-danger !w-full !min-w-0">
+                  <RotateCcw className="w-4 h-4" /> تفريغ
+                </button>
+              </div>
+              <input ref={fileInputRef} type="file" accept="application/json" onChange={handleImportFile} className="hidden" />
+              <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+              <input ref={signatureInputRef} type="file" accept="image/*" onChange={handleSignatureUpload} className="hidden" />
+              <input ref={fullSnapshotImportRef} type="file" accept="application/json" onChange={importFullSnapshotFile} className="hidden" />
+            </div>
+          </div>
+        </header>
+
+        {/* Settings panel */}
+        {showSettings && (
+          <div className="no-print fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in" onClick={() => setShowSettings(false)}>
+            <div className="bg-card rounded-2xl shadow-card border border-border w-full max-w-lg p-4 sm:p-6 my-4 max-h-[calc(100vh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-2xl font-bold text-primary">لوحة التحكم</h2>
+                <button onClick={() => setShowSettings(false)} className="p-1 rounded-md hover:bg-muted">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                <div>
+                  <Label className="mb-2 block">شعار المؤسسة</Label>
+                  <div className="flex items-center gap-3">
+                    <img src={logo || "/placeholder.svg"} alt="logo" className="w-20 h-20 object-contain bg-muted rounded-lg p-1 border border-border" />
+                    <div className="flex flex-col gap-2">
+                      <Button size="sm" onClick={() => logoInputRef.current?.click()} className="gap-2">
+                        <Upload className="w-4 h-4" /> رفع شعار
+                      </Button>
+                      {logo && (
+                        <Button size="sm" variant="outline" onClick={() => setLogo(null)} className="gap-2">
+                          <X className="w-4 h-4" /> إزالة
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">PNG/JPG — الحد 2 ميجا.</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="school" className="mb-2 block">اسم المدرسة</Label>
+                  <Input id="school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} />
+                </div>
+
+                <div>
+                  <Label htmlFor="principal" className="mb-2 block">اسم مدير المدرسة</Label>
+                  <Input id="principal" value={principalName} onChange={(e) => setPrincipalName(e.target.value)} />
+                </div>
+
+                <div>
+                  <Label className="mb-2 block">توقيع المدير</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="w-32 h-20 bg-muted rounded-lg p-1 border border-border flex items-center justify-center overflow-hidden">
+                      {signature ? (
+                        <img src={signature} alt="signature" className="max-w-full max-h-full object-contain" />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">لا يوجد توقيع</span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button size="sm" onClick={() => signatureInputRef.current?.click()} className="gap-2">
+                        <Upload className="w-4 h-4" /> رفع توقيع
+                      </Button>
+                      {signature && (
+                        <Button size="sm" variant="outline" onClick={() => setSignature(null)} className="gap-2">
+                          <X className="w-4 h-4" /> إزالة
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">يُفضّل صورة بخلفية شفافة (PNG) — يُحفظ تلقائياً للاستخدام المتكرر.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="t1" className="mb-2 block">عنوان فرعي للبطاقة 1</Label>
+                    <Input id="t1" value={card1.subtitle} onChange={(e) => setCard1({ ...card1, subtitle: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="t2" className="mb-2 block">عنوان فرعي للبطاقة 2</Label>
+                    <Input id="t2" value={card2.subtitle} onChange={(e) => setCard2({ ...card2, subtitle: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button onClick={() => { setEditMode(true); setShowSettings(false); toast.success("وضع التعديل مفعّل"); }} className="gap-2">
+                    <Settings className="w-4 h-4" /> تفعيل تعديل المعلمين
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowSettings(false)}>إغلاق</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Archive dialog */}
+        <Dialog open={showArchive} onOpenChange={setShowArchive}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Archive className="w-5 h-5" /> التقارير السابقة
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" onClick={exportAllArchive} className="gap-2 bg-primary hover:bg-primary/90">
+                  <FolderArchive className="w-4 h-4" /> نسخة احتياطية لكامل الأرشيف
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => archiveImportRef.current?.click()} className="gap-2">
+                  <FolderUp className="w-4 h-4" /> استرجاع نسخة الأرشيف
+                </Button>
+                <Button size="sm" variant="destructive" onClick={deleteAllArchived} className="gap-2">
+                  <Trash2 className="w-4 h-4" /> حذف الكل
+                </Button>
+                <input ref={archiveImportRef} type="file" accept="application/json" onChange={importAllArchive} className="hidden" />
+              </div>
+              <div className="relative">
+                <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={archiveQuery}
+                  onChange={(e) => setArchiveQuery(e.target.value)}
+                  placeholder="ابحث بالتاريخ أو اسم المدرسة..."
+                  className="pr-10"
+                />
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                {filteredArchive.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8 text-sm">لا توجد تقارير محفوظة</p>
+                ) : (
+                  filteredArchive.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between gap-3 p-3 bg-muted/40 rounded-lg border border-border hover:bg-muted/60 transition">
+                      <div className="text-right flex-1">
+                        <p className="font-semibold text-sm">{r.date} — {r.hijri}</p>
+                        <p className="text-xs text-muted-foreground">{r.schoolName} — حُفظ في {new Date(r.savedAt).toLocaleString("ar")}</p>
+                      </div>
+                      <Button size="sm" onClick={() => loadArchived(r)}>تحميل</Button>
+                      <Button size="sm" variant="ghost" onClick={() => deleteArchived(r.id)} className="text-danger hover:bg-danger/10">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Templates dialog */}
+        <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileStack className="w-5 h-5" /> القوالب الجاهزة
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 block">البطاقة المستهدفة</Label>
+                <Select value={templateTarget} onValueChange={(v) => setTemplateTarget(v as "card1" | "card2")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="card1">معلمو التعليم العام</SelectItem>
+                    <SelectItem value="card2">معلمو التربية الفكرية والتوحد</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="mb-2 block">القالب</Label>
+                <div className="space-y-2">
+                  {templates.map((t) => (
+                    <label key={t.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${selectedTemplate === t.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40"}`}>
+                      <input type="radio" name="tpl" checked={selectedTemplate === t.id} onChange={() => setSelectedTemplate(t.id)} className="mt-1" />
+                      <div>
+                        <p className="font-semibold text-sm">{t.label}</p>
+                        <p className="text-xs text-muted-foreground">{t.description}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setTemplateOpen(false)}>إلغاء</Button>
+              <Button onClick={applyTemplate}>تطبيق</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Print theme dialog */}
+        <Dialog open={showThemeDialog} onOpenChange={setShowThemeDialog}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5" /> اختيار ثيم الطباعة
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2.5">
+              <p className="text-xs text-muted-foreground">
+                اختر شكل التصميم الذي سيظهر عند طباعة التقرير. يُحفظ تلقائياً.
+              </p>
+              <div className="grid gap-2.5">
+                {PRINT_THEMES.map((t) => {
+                  const active = printTheme === t.id;
+                  return (
+                    <label
+                      key={t.id}
+                      className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                        active ? "border-primary bg-primary/5 shadow-soft" : "border-border hover:bg-muted/40"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="print-theme"
+                        checked={active}
+                        onChange={() => setPrintTheme(t.id)}
+                        className="shrink-0"
+                      />
+                      <div className="shrink-0 w-20 h-14 rounded-lg overflow-hidden border border-border shadow-sm bg-white flex flex-col">
+                        <div
+                          className="h-2"
+                          style={{ background: `linear-gradient(90deg, ${t.swatch[0]} 0%, ${t.swatch[1]} 50%, ${t.swatch[0]} 100%)` }}
+                        />
+                        <div
+                          className="h-4 flex items-center justify-center text-[8px] font-bold text-white"
+                          style={{ background: t.swatch[0] }}
+                        >
+                          عنوان
+                        </div>
+                        <div className="flex-1 flex">
+                          <div className="flex-1 border-l border-gray-200" />
+                          <div className="flex-1" style={{ background: `${t.swatch[1]}22` }} />
+                          <div className="flex-1 border-r border-gray-200" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm">{t.label}</p>
+                        <p className="text-xs text-muted-foreground">{t.desc}</p>
+                      </div>
+                      {active && (
+                        <span className="shrink-0 text-xs font-bold text-primary px-2 py-0.5 rounded-full bg-primary/10">
+                          ✓ مختار
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowThemeDialog(false)}>
+                إغلاق
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowThemeDialog(false);
+                  toast.success("سيتم استخدام هذا الثيم عند الطباعة");
+                }}
+              >
+                حفظ
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Specialty editor dialog */}
+        <Dialog open={specialtyOpen} onOpenChange={setSpecialtyOpen}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GraduationCap className="w-5 h-5" /> تعديل مواد التخصص للمعلمين
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+              <div>
+                <Label className="mb-2 block">البطاقة المستهدفة</Label>
+                <Select value={specialtyTarget} onValueChange={(v) => setSpecialtyTarget(v as "card1" | "card2")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="card1">معلمو التعليم العام</SelectItem>
+                    <SelectItem value="card2">معلمو التربية الفكرية والتوحد</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1 border-t border-border pt-3">
+                {(specialtyTarget === "card1" ? card1 : card2).teachers.map((t) => {
+                  const setCard = specialtyTarget === "card1" ? setCard1 : setCard2;
+                  const cur = specialtyTarget === "card1" ? card1 : card2;
+                  const isCustom = !COMMON_SPECIALTIES.includes(t.specialty);
+                  return (
+                    <div key={t.id} className="flex items-center gap-2 p-2 bg-muted/40 rounded-lg border border-border">
+                      <span className="font-semibold text-sm flex-1 truncate text-right">{t.name}</span>
+                      <Select
+                        value={isCustom ? "__custom__" : t.specialty}
+                        onValueChange={(v) => {
+                          if (v === "__custom__") return;
+                          setCard({
+                            ...cur,
+                            teachers: cur.teachers.map((x) => x.id === t.id ? { ...x, specialty: v } : x),
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {COMMON_SPECIALTIES.map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                          <SelectItem value="__custom__">— مخصص —</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={t.specialty}
+                        onChange={(e) => setCard({
+                          ...cur,
+                          teachers: cur.teachers.map((x) => x.id === t.id ? { ...x, specialty: e.target.value } : x),
+                        })}
+                        placeholder="تخصص مخصص"
+                        className="w-[140px] h-9"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => { setSpecialtyOpen(false); toast.success("تم حفظ التخصصات"); }}>تم</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Design backups dialog */}
+        <Dialog open={showDesignBackups} onOpenChange={setShowDesignBackups}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5" /> نسخ التصميم الاحتياطية
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+              <div className="bg-muted/40 rounded-lg p-3 border border-border space-y-2">
+                <Label className="text-sm">حفظ نسخة جديدة من التصميم الحالي</Label>
+                <p className="text-xs text-muted-foreground">يشمل: الشعار، التوقيع، اسم المدرسة، اسم المدير، العناوين الفرعية، وأسماء الأعمدة.</p>
+                <div className="flex gap-2">
+                  <Input
+                    value={newDesignBackupName}
+                    onChange={(e) => setNewDesignBackupName(e.target.value)}
+                    placeholder="اسم النسخة (اختياري)"
+                    className="flex-1"
+                  />
+                  <Button onClick={saveDesignBackup} className="gap-2">
+                    <Save className="w-4 h-4" /> حفظ
+                  </Button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                {designBackups.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8 text-sm">لا توجد نسخ تصميم محفوظة بعد</p>
+                ) : (
+                  designBackups.map((b) => (
+                    <div key={b.id} className="flex items-center justify-between gap-3 p-3 bg-muted/40 rounded-lg border border-border hover:bg-muted/60 transition">
+                      <div className="flex items-center gap-3 flex-1">
+                        {b.logo ? (
+                          <img src={b.logo} alt="" className="w-12 h-12 object-contain bg-card rounded border border-border" />
+                        ) : (
+                          <div className="w-12 h-12 bg-card rounded border border-border flex items-center justify-center text-muted-foreground">
+                            <ImageIcon className="w-5 h-5" />
+                          </div>
+                        )}
+                        <div className="text-right flex-1">
+                          <p className="font-semibold text-sm">{b.name}</p>
+                          <p className="text-xs text-muted-foreground">{b.schoolName} — {new Date(b.savedAt).toLocaleString("ar")}</p>
+                        </div>
+                      </div>
+                      <Button size="sm" onClick={() => restoreDesignBackup(b)}>استرجاع</Button>
+                      <Button size="sm" variant="outline" onClick={() => exportDesignBackup(b)} className="gap-1">
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => deleteDesignBackup(b.id)} className="text-danger hover:bg-danger/10">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Full Snapshots Dialog */}
+        <Dialog open={showFullSnapshots} onOpenChange={setShowFullSnapshots}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <DatabaseBackup className="w-5 h-5 text-primary" /> النسخ الشاملة للموقع
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                النسخة الشاملة تحفظ كل شيء: التقييمات الحالية، الشعار، التوقيع، اسم المدرسة والمدير، التاريخ، كل التقارير المؤرشفة، ونسخ التصميم. عند الاسترجاع يعود الموقع كما كان وقت الحفظ.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-muted/40 border border-border">
+                <Input
+                  value={newSnapshotName}
+                  onChange={(e) => setNewSnapshotName(e.target.value)}
+                  placeholder="اسم النسخة (اختياري)"
+                  className="flex-1 min-w-[200px]"
+                />
+                <Button onClick={saveFullSnapshot} className="gap-2">
+                  <Save className="w-4 h-4" /> حفظ نسخة شاملة الآن
+                </Button>
+                <Button onClick={() => exportFullSnapshot()} variant="outline" className="gap-2">
+                  <Download className="w-4 h-4" /> تنزيل ملف شامل
+                </Button>
+                <Button onClick={() => fullSnapshotImportRef.current?.click()} variant="outline" className="gap-2">
+                  <Upload className="w-4 h-4" /> استرجاع من ملف
+                </Button>
+              </div>
+
+              {fullSnapshots.length === 0 ? (
+                <div className="text-center text-sm text-muted-foreground py-8 border border-dashed border-border rounded-lg">
+                  لا توجد نسخ شاملة محفوظة بعد
+                </div>
+              ) : (
+                <div className="max-h-[50vh] overflow-y-auto space-y-2">
+                  {fullSnapshots.map((s) => (
+                    <div key={s.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/30 transition">
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{s.name}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(s.savedAt).toLocaleString("ar")}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button size="sm" onClick={() => restoreFullSnapshot(s)} className="gap-1">
+                          <RotateCcw className="w-3.5 h-3.5" /> استرجاع
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => exportFullSnapshot(s)} className="gap-1">
+                          <Download className="w-3.5 h-3.5" /> تنزيل
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => deleteFullSnapshot(s.id)} className="text-danger hover:bg-danger/10">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowFullSnapshots(false)}>إغلاق</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Range tracking dialog */}
+        <Dialog open={rangeOpen} onOpenChange={setRangeOpen}>
+          <DialogContent className="max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CalendarRange className="w-5 h-5" /> رصد لفترة زمنية
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 overflow-y-auto pr-1">
+              <p className="text-xs text-muted-foreground no-print">
+                اختر فترة (يوم، أسبوع، شهر، أو نطاق حر) ثم اعرض ملخّص الأداء أو طبّق قالباً على كامل الفترة دفعة واحدة.
+              </p>
+
+              {/* Print-only header */}
+              <div className="hidden print:block text-center border-b-2 border-black pb-2 mb-2">
+                <p className="text-xs">المملكة العربية السعودية — وزارة التعليم</p>
+                <p className="font-bold">{schoolName}</p>
+                <h2 className="text-lg font-bold mt-1">تقرير متابعة المعلمين للفترة</h2>
+                <p className="text-sm">من {rangeFrom} إلى {rangeTo} — ({rangeDates.length} يوم، {rangeReports.length} تقرير)</p>
+              </div>
+
+              {/* Quick presets */}
+              <div className="flex flex-wrap gap-2 no-print">
+                <Button size="sm" variant="outline" onClick={() => { setRangeFrom(todayISO); setRangeTo(todayISO); }}>اليوم</Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 6);
+                  setRangeFrom(start.toISOString().slice(0,10)); setRangeTo(end.toISOString().slice(0,10));
+                }}>آخر أسبوع</Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 13);
+                  setRangeFrom(start.toISOString().slice(0,10)); setRangeTo(end.toISOString().slice(0,10));
+                }}>أسبوعان</Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  const now = new Date(); const start = new Date(now.getFullYear(), now.getMonth(), 1); const end = new Date(now.getFullYear(), now.getMonth()+1, 0);
+                  setRangeFrom(start.toISOString().slice(0,10)); setRangeTo(end.toISOString().slice(0,10));
+                }}>هذا الشهر</Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  const now = new Date(); const start = new Date(now.getFullYear(), now.getMonth()-1, 1); const end = new Date(now.getFullYear(), now.getMonth(), 0);
+                  setRangeFrom(start.toISOString().slice(0,10)); setRangeTo(end.toISOString().slice(0,10));
+                }}>الشهر الماضي</Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  const end = new Date(); const start = new Date(); start.setMonth(end.getMonth() - 3);
+                  setRangeFrom(start.toISOString().slice(0,10)); setRangeTo(end.toISOString().slice(0,10));
+                }}>آخر 3 أشهر</Button>
+              </div>
+
+              {/* Date inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 no-print">
+                <div>
+                  <Label className="mb-2 block">من تاريخ</Label>
+                  <Input type="date" value={rangeFrom} onChange={(e) => setRangeFrom(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="mb-2 block">إلى تاريخ</Label>
+                  <Input type="date" value={rangeTo} onChange={(e) => setRangeTo(e.target.value)} />
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm cursor-pointer no-print">
+                <input type="checkbox" checked={rangeIncludeWeekends} onChange={(e) => setRangeIncludeWeekends(e.target.checked)} />
+                تضمين أيام العطلة (الجمعة والسبت)
+              </label>
+
+              <div className="rounded-lg bg-muted/40 border border-border p-3 text-sm flex flex-wrap items-center gap-x-5 gap-y-1 no-print">
+                <span><strong>عدد الأيام:</strong> {rangeDates.length}</span>
+                <span><strong>تقارير محفوظة في الفترة:</strong> {rangeReports.length}</span>
+                {rangeDisplayActive && <span className="text-primary font-semibold">معروض حالياً في الموقع</span>}
+              </div>
+
+              {/* Bulk apply template to range */}
+              <div className="rounded-lg border border-border p-3 space-y-3 bg-card no-print">
+                <p className="font-semibold text-sm flex items-center gap-2"><FileStack className="w-4 h-4" /> رصد سريع لكامل الفترة</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="mb-2 block text-xs">القالب المُطبَّق</Label>
+                    <Select value={rangeApplyTemplate} onValueChange={setRangeApplyTemplate}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {templates.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-xs">البطاقة المستهدفة</Label>
+                    <Select value={rangeApplyTarget} onValueChange={(v) => setRangeApplyTarget(v as any)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="both">كلتا البطاقتين</SelectItem>
+                        <SelectItem value="card1">التعليم العام</SelectItem>
+                        <SelectItem value="card2">التربية الفكرية والتوحد</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Button onClick={applyTemplateToRange} className="gap-2 w-full sm:w-auto">
+                  <Save className="w-4 h-4" /> تطبيق القالب على {rangeDates.length} يوم وحفظها
+                </Button>
+              </div>
+
+              {/* Detailed site-style preview */}
+              <div className="rounded-lg border border-border p-3 space-y-3 bg-card">
+                <p className="font-semibold text-sm flex items-center gap-2"><Archive className="w-4 h-4" /> تفاصيل تقييم الفترة كما ستظهر في الموقع والطباعة</p>
+                {rangeReports.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-2">لا توجد تقييمات محفوظة في هذه الفترة.</p>
+                ) : (
+                  <div className="space-y-2 text-xs">
+                    {rangeReportsChronological.map((r) => (
+                      <div key={r.id} className="rounded-md border border-border bg-muted/30 px-3 py-2">
+                        <p className="font-bold text-primary">{r.hijri} — {r.date}</p>
+                        <p className="text-muted-foreground">سيظهر هذا اليوم بكامل بطاقتي التعليم العام والتربية الفكرية داخل الموقع والطباعة الرئيسية عند الضغط على عرض في الموقع.</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Saved days within range — with delete actions */}
+              <div className="rounded-lg border border-border p-3 space-y-2 bg-card no-print">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <p className="font-semibold text-sm flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4" /> الأيام المرصودة داخل الفترة ({rangeReports.length})
+                  </p>
+                  {rangeReports.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="gap-2"
+                      onClick={() => {
+                        if (window.confirm(`سيتم حذف ${rangeReports.length} رصد دفعة واحدة. متابعة؟`)) {
+                          deleteAllRangeReports();
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" /> حذف كل رصد الفترة
+                    </Button>
+                  )}
+                </div>
+                {rangeReports.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">لا توجد أيام مرصودة في هذه الفترة بعد.</p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto divide-y divide-border">
+                    {rangeReports.map((r) => (
+                      <div key={r.date} className="flex items-center justify-between py-1.5 text-sm">
+                        <span className="flex flex-col">
+                          <span className="font-medium">{r.date}</span>
+                          <span className="text-[10px] text-muted-foreground">{r.hijri}</span>
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-danger hover:text-danger gap-1"
+                          onClick={() => {
+                            if (window.confirm(`حذف رصد يوم ${r.date}؟`)) {
+                              deleteRangeReportByDate(r.date);
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          حذف
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter className="flex-wrap gap-2 no-print">
+              <Button variant="outline" onClick={() => setRangeOpen(false)}>إغلاق</Button>
+              <Button onClick={showRangeOnSite} variant="outline" className="gap-2" disabled={rangeReports.length === 0}>
+                <CalendarRange className="w-4 h-4" /> عرض في الموقع ({rangeReports.length} يوم)
+              </Button>
+              <Button onClick={() => printRangeReport("portrait")} className="gap-2" disabled={rangeReports.length === 0}>
+                <Printer className="w-4 h-4" /> طباعة طولي ({rangeReports.length} يوم)
+              </Button>
+              <Button onClick={() => printRangeReport("landscape")} variant="secondary" className="gap-2" disabled={rangeReports.length === 0}>
+                <Printer className="w-4 h-4" /> طباعة عرضي ({rangeReports.length} يوم)
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <PerformanceCharts
+          cards={[
+            { label: "التعليم العام", config: card1 },
+            { label: "التربية الفكرية والتوحد", config: card2 },
+          ]}
+          logo={logo}
+          signature={signature}
+          schoolName={schoolName}
+          principalName={principalName}
+          reportDate={fullReportDate}
+        />
+
+        {rangeDisplayActive ? (
+          <section className="range-site-days space-y-6" aria-label="تقييم الفترة الزمنية">
+            <div className="no-print bg-card rounded-2xl shadow-soft border border-border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <p className="font-bold text-primary">تقييم الفترة الزمنية معروض في الموقع</p>
+                <p className="text-sm text-muted-foreground">من {rangeFrom} إلى {rangeTo} — {rangeReportsChronological.length} يوم. أزرار الطباعة الرئيسية ستطبع هذه الفترة كاملة.</p>
+              </div>
+              <Button variant="outline" onClick={() => setRangeDisplayActive(false)}>العودة للتقييم اليومي</Button>
+            </div>
+            {rangeReportsChronological.map((rep) => {
+              const dayLabel = `${rep.hijri} — ${rep.date}`;
+              return (
+                <div key={rep.id} className="range-site-day space-y-6">
+                  <section className="report-section" aria-label={`التعليم العام — ${rep.date}`}>
+                    <TeacherCard config={{ ...rep.card1, title: COMMON_TITLE }} onChange={() => {}} logo={logo} signature={signature} schoolName={rep.schoolName || schoolName} principalName={rep.principalName || principalName} editMode={false} reportDate={dayLabel} />
+                  </section>
+                  <section className="report-section" aria-label={`التربية الفكرية — ${rep.date}`}>
+                    <TeacherCard config={{ ...rep.card2, title: COMMON_TITLE }} onChange={() => {}} logo={logo} signature={signature} schoolName={rep.schoolName || schoolName} principalName={rep.principalName || principalName} editMode={false} reportDate={dayLabel} />
+                  </section>
+                </div>
+              );
+            })}
+          </section>
+        ) : (
+          <>
+            <section className="report-section" aria-label="معلمو التعليم العام">
+              <TeacherCard config={card1} onChange={setCard1} logo={logo} signature={signature} schoolName={schoolName} principalName={principalName} editMode={editMode} reportDate={fullReportDate} />
+            </section>
+
+            <section className="report-section" aria-label="معلمو التربية الفكرية والتوحد">
+              <TeacherCard config={card2} onChange={setCard2} logo={logo} signature={signature} schoolName={schoolName} principalName={principalName} editMode={editMode} reportDate={fullReportDate} />
+            </section>
+          </>
+        )}
+
+        {/* Print-only: detailed cards per archived day in the selected range */}
+        <div className="print-range-days" aria-hidden="true">
+          {rangeReportsChronological.flatMap((rep) => {
+            const dayLabel = `${rep.hijri} — ${rep.date}`;
+            return [
+                <section key={`${rep.id}-general`} className="report-section" aria-label={`التعليم العام — ${rep.date}`}>
+                  <TeacherCard
+                    config={{ ...rep.card1, title: COMMON_TITLE }}
+                    onChange={() => {}}
+                    logo={logo}
+                    signature={signature}
+                    schoolName={rep.schoolName || schoolName}
+                    principalName={rep.principalName || principalName}
+                    editMode={false}
+                    reportDate={dayLabel}
+                  />
+                </section>,
+                <section key={`${rep.id}-fikriya`} className="report-section" aria-label={`التربية الفكرية — ${rep.date}`}>
+                  <TeacherCard
+                    config={{ ...rep.card2, title: COMMON_TITLE }}
+                    onChange={() => {}}
+                    logo={logo}
+                    signature={signature}
+                    schoolName={rep.schoolName || schoolName}
+                    principalName={rep.principalName || principalName}
+                    editMode={false}
+                    reportDate={dayLabel}
+                  />
+                </section>,
+            ];
+          })}
+        </div>
+
+        <footer className="no-print text-center text-xs text-muted-foreground py-6 space-y-1">
+          <p>يتم الحفظ التلقائي في هذا المتصفح. لا تنسَ أخذ نسخة احتياطية بانتظام.</p>
+          <p>© جميع الحقوق محفوظة — مدرسة ثريبان الابتدائية وفصول التربية الفكرية</p>
+          <p>تصميم وتطوير: علي محمد القرني</p>
+        </footer>
+      </div>
+    </main>
+  );
+};
+
+export default Index;
